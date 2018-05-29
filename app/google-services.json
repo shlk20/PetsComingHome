@@ -1,0 +1,42 @@
+{
+  "project_info": {
+    "project_number": "346930363268",
+    "firebase_url": "https://petsearch-6623b.firebaseio.com",
+    "project_id": "petsearch-6623b",
+    "storage_bucket": "petsearch-6623b.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:346930363268:android:63f016f3946d6979",
+        "android_client_info": {
+          "package_name": "com.example.cqxbj.petscominghome"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "346930363268-9tmd5ldild881lqrtp79sbmvs8uleihm.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBnPRUlDkp3idDWs0cj55s9ztaB1z0HKII"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 1,
+          "other_platform_oauth_client": []
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
