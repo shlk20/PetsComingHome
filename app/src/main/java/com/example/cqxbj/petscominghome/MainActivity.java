@@ -2,6 +2,7 @@ package com.example.cqxbj.petscominghome;
 
 
 import android.app.FragmentManager;
+import android.content.Context;
 import android.graphics.Color;
 import android.support.annotation.NonNull;
 import android.support.design.widget.NavigationView;
@@ -22,6 +23,14 @@ public class MainActivity extends AppCompatActivity {
     private DrawerLayout mDrawerLayout;
     private NavigationView mNavigationView;
    private FragmentManager fragmentManager;
+
+    // a static variable to get a reference of our application context
+    public static Context contextOfApplication;
+    public static Context getContextOfApplication()
+    {
+        return contextOfApplication;
+    }
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -68,8 +77,9 @@ public class MainActivity extends AppCompatActivity {
         fragmentManager=getFragmentManager();
         fragmentManager.beginTransaction().replace(R.id.MainContainer,new petsListFragment()).commit();
 
-
         setUI(user);
+
+        contextOfApplication = getApplicationContext();
     }
 
     @Override
