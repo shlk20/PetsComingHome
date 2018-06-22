@@ -1,46 +1,32 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="match_parent" android:layout_height="220dp">
+    android:layout_width="match_parent" android:background="@color/colorApp" android:layout_height="wrap_content">
 
     <ImageView
 
         android:id="@+id/userImage"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:src="@drawable/android"
-        android:layout_centerInParent="true"/>
+        android:layout_width="66dp"
+        android:layout_height="66dp"
+        android:layout_marginTop="30dp"
+        android:layout_marginLeft="10dp"
+        />
 
     <TextView
         android:id="@+id/userEmInNavHeader"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_below="@id/userImage"
+        android:layout_marginTop="10dp"
         android:paddingLeft="10dp"
-        android:text="Username"
+        android:text="Email"
         android:textColor="@android:color/white" />
-
     <TextView
-        android:id="@+id/ActiveAddText"
+        android:id="@+id/userNameInNavHeader"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_below="@id/userEmInNavHeader"
+        android:layout_marginTop="10dp"
         android:paddingLeft="10dp"
-        android:text="Active adds: 0"
+        android:text="Username"
         android:textColor="@android:color/white" />
-    <TextView
-        android:id="@+id/TotalAddText"
-        android:textColor="@android:color/white"
-        android:text="Total adds: 0"
-        android:paddingLeft="10dp"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_below="@id/ActiveAddText" />
-    <TextView
-        android:id="@+id/CommentsText"
-        android:textColor="@android:color/white"
-        android:text="Comments: 0"
-        android:paddingLeft="10dp"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_below="@id/TotalAddText"/>
 </RelativeLayout>

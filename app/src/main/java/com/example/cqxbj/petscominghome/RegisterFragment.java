@@ -1,6 +1,5 @@
 package com.example.cqxbj.petscominghome;
 
-import android.app.Activity;
 import android.app.Fragment;
 import android.app.FragmentManager;
 import android.os.Bundle;
@@ -11,31 +10,29 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.auth.UserProfileChangeRequest;
 import com.google.firebase.firestore.FirebaseFirestore;
-
-import java.util.HashMap;
-import java.util.Map;
 
 public class RegisterFragment extends Fragment implements View.OnClickListener{
 
     FirebaseFirestore firebaseDb;
     FirebaseAuth firebaseAuth;
 
-    Activity activity;
+    MainActivity activity;
     Button signUp;
-    TextView signIn;
+    TextView signInTextView;
+    TextView signUpTextView;
+    ProgressBar progressBar;
     EditText registerUsername;
     EditText registerEmail;
-    EditText registerPhone;
     EditText registerPassword;
     EditText registerPasswordConfirm;
     FragmentManager fragmentManager;
@@ -46,16 +43,17 @@ public class RegisterFragment extends Fragment implements View.OnClickListener{
         firebaseAuth=FirebaseAuth.getInstance();
         firebaseDb=FirebaseFirestore.getInstance();
 
+        activity=(MainActivity)getActivity();
+        progressBar=view.findViewById(R.id.progressBarRegister);
+        signUpTextView=view.findViewById(R.id.signUpTextView);
+        signInTextView=view.findViewById(R.id.signIn);
+        signInTextView.setOnClickListener(this);
+        registerUsername=view.findViewById(R.id.registerUsername);
+        registerEmail=view.findViewById(R.id.registerEmail);
+        registerPassword=view.findViewById(R.id.registerPassword);
+        registerPasswordConfirm=view.findViewById(R.id.registerPasswordConfim);
 
-        signIn=view.findViewById(R.id.signIn);
-        signIn.setOnClickListener(this);
-        registerUsername=(EditText)view.findViewById(R.id.signInPassword);
-        registerEmail=(EditText)view.findViewById(R.id.registerEmail);
-        registerPhone=(EditText)view.findViewById(R.id.signInEmail);
-        registerPassword=(EditText)view.findViewById(R.id.registerPassword);
-        registerPasswordConfirm=(EditText)view.findViewById(R.id.registerPasswordConfim);
-
-        signUp=(Button)view.findViewById(R.id.registerBtn);
+        signUp=view.findViewById(R.id.registerBtn);
         signUp.setOnClickListener(this);
         signUp.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -64,7 +62,7 @@ public class RegisterFragment extends Fragment implements View.OnClickListener{
             }
         });
 
-        signIn.setOnClickListener(new View.OnClickListener() {
+        signInTextView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 goToSignInPage();
@@ -74,43 +72,50 @@ public class RegisterFragment extends Fragment implements View.OnClickListener{
     }
     public void register()
     {
-        if(isInformationFilled()) {
-            firebaseAuth.createUserWithEmailAndPassword(registerEmail.getText().toString(),registerPassword.getText().toString())
-                    .addOnCompleteListener(new OnCompleteListener<AuthResult>() {
-                        @Override
-                        public void onComplete(@NonNull Task<AuthResult> task) {
-                            Map<String,String> userMap=new HashMap<>();
-                            userMap.put("Username",registerUsername.getText().toString());
-                            userMap.put("Email",registerEmail.getText().toString());
-                            userMap.put("Phone",registerPhone.getText().toString());
-                            userMap.put("Uid",firebaseAuth.getCurrentUser().getUid());
-                            firebaseDb.collection("User").add(userMap).addOnCompleteListener(new OnCompleteListener<DocumentReference>() {
-                                @Override
-                                public void onComplete(@NonNull Task<DocumentReference> task) {
-                                    if(task.isSuccessful())
-                                    {
-                                        activity=getActivity();
-                                        activity.recreate();
-                                        //fragmentManager=activity.getFragmentManager();
-                                        //fragmentManager.beginTransaction().replace(R.id.MainContainer,new petsListFragment()).commit();
-                                    }
-                                    else
-                                    {
-                                        Toast.makeText(getContext(),"Failed to register",Toast.LENGTH_LONG).show();
-                                    }
+        if(isInformationFilled())
+        {
+            if(isPasswordConfirmed())
+            {
+                progressBar.setVisibility(View.VISIBLE);
+                hideWidgets();
+
+                firebaseAuth.createUserWithEmailAndPassword(registerEmail.getText().toString(),registerPassword.getText().toString())
+                        .addOnCompleteListener(new OnCompleteListener<AuthResult>() {
+                            @Override
+                            public void onComplete(@NonNull Task<AuthResult> task) {
+
+                                if(task.isSuccessful()) {
+                                    resetPage();
+                                    if(activity.loginFragment.isAdded()) {activity.loginFragment.resetPage();}
+                                    task.getResult().getUser()
+                                            .updateProfile(new UserProfileChangeRequest.Builder().setDisplayName(registerUsername.getText().toString()).build());
+                                    Toast.makeText(getContext(),"Registered successfully",Toast.LENGTH_LONG).show();
+                                    activity.hideAllfragments();
+                                    activity.showTheFragment(activity.petsListFragment);
+                                    activity.petsListFragment.getDefault();
+                                    activity.getSupportActionBar().setTitle("Pets");
+                                    activity.setUI(firebaseAuth.getCurrentUser());
                                 }
-                            });
-                        }
-                    }).addOnFailureListener(new OnFailureListener() {
-                @Override
-                public void onFailure(@NonNull Exception e) {
-                    Toast.makeText(getContext(),"Failed to register",Toast.LENGTH_LONG).show();
-                }
-            });
+                                else {
+
+                                    Toast.makeText(getContext(),task.getException().getMessage().toString(),Toast.LENGTH_LONG).show();
+                                }
+                                progressBar.setVisibility(View.INVISIBLE);
+                                displayWidgets();
+
+                            }
+                        });
+            }
+            else
+            {
+                Toast.makeText(getContext(),"Passwords are different",Toast.LENGTH_LONG).show();
+            }
+
+
         }
         else
         {
-            Toast.makeText(getContext(),"Please fill the information",Toast.LENGTH_LONG).show();
+            Toast.makeText(getContext(),"Please fill the form",Toast.LENGTH_LONG).show();
         }
 
 
@@ -118,17 +123,16 @@ public class RegisterFragment extends Fragment implements View.OnClickListener{
 
     public void goToSignInPage()
     {
-        activity=getActivity();
-        fragmentManager=activity.getFragmentManager();
-        fragmentManager.beginTransaction().replace(R.id.MainContainer,new loginFragment()).commit();
+        activity.hideAllfragments();
+        activity.getSupportActionBar().setTitle("Sign in");
+        activity.showTheFragment(activity.loginFragment);
     }
 
 
     public boolean isInformationFilled()
     {
         if(registerUsername.getText().toString().equals("")||registerEmail.getText().toString().equals("")
-                ||registerPassword.getText().toString().equals("")||registerPasswordConfirm.getText().toString().equals("")||
-                registerPhone.getText().toString().equals(""))
+                ||registerPassword.getText().toString().equals("")||registerPasswordConfirm.getText().toString().equals(""))
         {
             return false;
         }
@@ -137,7 +141,14 @@ public class RegisterFragment extends Fragment implements View.OnClickListener{
             return true;
         }
     }
-
+    public boolean isPasswordConfirmed()
+    {
+        if(registerPassword.getText().toString().equals(registerPasswordConfirm.getText().toString()))
+        {
+            return true;
+        }
+        else return false;
+    }
     @Override
     public void onClick(View v) {
         switch (v.getId())
@@ -147,9 +158,37 @@ public class RegisterFragment extends Fragment implements View.OnClickListener{
                 break;
             case R.id.registerBtn:
                 register();
+                activity.hideTheInput();
                 break;
         }
     }
 
+    public void hideWidgets()
+    {
+        signUpTextView.setVisibility(View.INVISIBLE);
+        signInTextView.setVisibility(View.INVISIBLE);
+        signUp.setVisibility(View.INVISIBLE);
+        registerUsername.setVisibility(View.INVISIBLE);
+        registerEmail.setVisibility(View.INVISIBLE);
+        registerPassword.setVisibility(View.INVISIBLE);
+        registerPasswordConfirm.setVisibility(View.INVISIBLE);
 
+    }
+    public void displayWidgets()
+    {
+        signUpTextView.setVisibility(View.VISIBLE);
+        signInTextView.setVisibility(View.VISIBLE);
+        signUp.setVisibility(View.VISIBLE);
+        registerUsername.setVisibility(View.VISIBLE);
+        registerEmail.setVisibility(View.VISIBLE);
+        registerPassword.setVisibility(View.VISIBLE);
+        registerPasswordConfirm.setVisibility(View.VISIBLE);
+    }
+    public void resetPage()
+    {
+        registerEmail.setText("");
+        registerPassword.setText("");
+        registerPasswordConfirm.setText("");
+        registerUsername.setText("");
+    }
 }

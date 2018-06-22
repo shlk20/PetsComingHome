@@ -2,34 +2,55 @@
 <menu  xmlns:android="http://schemas.android.com/apk/res/android">
 
     <group
-        android:checkableBehavior="single">
-        <item android:title="Pets near you">
-        </item>
-
-        <item android:title="Search by filters">
-        </item>
-
-        <item android:title="Show on map">
+        android:checkableBehavior="none">
+        <item
+            android:icon="@drawable/paw"
+            android:id="@+id/PetsItem"
+            android:title="Pets around you">
         </item>
 
         <item
+            android:icon="@drawable/ic_search_black_24dp"
+            android:id="@+id/SearchItem"
+            android:title="Search by filters">
+        </item>
+
+        <item
+            android:icon="@drawable/ic_place_black_24dp"
+            android:id="@+id/ShowOnMapItem"
+            android:title="Show on map">
+        </item>
+
+        <item
+            android:icon="@drawable/ic_add_circle_black_24dp"
             android:id="@+id/AddNewPetItem"
             android:title="Add a new pet">
         </item>
 
-        <item android:title="App settings">
+        <item
+            android:icon="@drawable/ic_settings_black_24dp"
+            android:id="@+id/AppSettingItem"
+            android:title="App settings">
+        </item>
+        <item
+            android:icon="@drawable/mypets"
+            android:id="@+id/MyPetsItem"
+            android:title="My pets">
         </item>
 
         <item
+            android:icon="@drawable/signin"
             android:id="@+id/SignInItem"
             android:title="Sign In">
         </item>
 
         <item
+            android:icon="@drawable/signup"
             android:id="@+id/SignUpItem"
             android:title="Sign Up">
         </item>
         <item
+            android:icon="@drawable/signout"
             android:id="@+id/SignOutItem"
             android:title="Sign Out">
         </item>

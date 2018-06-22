@@ -12,15 +12,16 @@
             android:id="@+id/MainContainer"
             android:layout_width="match_parent"
             android:layout_height="match_parent">
+
         </FrameLayout>
 
         <android.support.design.widget.NavigationView
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
             android:layout_gravity="start"
-            android:background="@android:color/darker_gray"
+            android:background="@android:color/white"
             android:id="@+id/MainNavigationView"
-            app:itemTextColor="@android:color/white"
+            app:itemTextColor="@android:color/black"
             app:menu="@menu/navgation_menu"
             app:headerLayout="@layout/nav_header">
         </android.support.design.widget.NavigationView>

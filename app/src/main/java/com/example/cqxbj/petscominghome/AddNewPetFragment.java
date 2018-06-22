@@ -11,6 +11,8 @@ import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.Color;
 import android.location.Address;
 import android.location.Geocoder;
 import android.net.Uri;
@@ -24,9 +26,12 @@ import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
+import android.text.format.DateUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.inputmethod.InputMethodManager;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.DatePicker;
@@ -51,17 +56,23 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.OnProgressListener;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
 
+
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.UUID;
 
 import javax.xml.transform.Result;
@@ -72,17 +83,22 @@ import static android.app.Activity.RESULT_OK;
  * Created by cqxbj on 22/05/18.
  */
 
-public class AddNewPetFragment extends Fragment implements View.OnClickListener,DatePickerDialog.OnDateSetListener, OnMapReadyCallback {
+public class AddNewPetFragment
+        extends Fragment
+        implements  View.OnClickListener,
+                    DatePickerDialog.OnDateSetListener,
+                    OnMapReadyCallback{
 
-    private FirebaseAuth mAuth;
-    private DatabaseReference myRef;
+
+    private FirebaseFirestore mFirestore;
+
     FirebaseStorage mStorage;
     StorageReference mStorageReference;
 
-    FirebaseUser user = mAuth.getInstance().getCurrentUser();
 
-    private final int PICK_IMAGE_REQUEST = 71;
+    private final int PICK_IMAGE_REQUEST = 10;
     private Uri filePath;
+    private byte[] uploadImageData;
     private ImageView imageView;
 
     View mView;
@@ -106,126 +122,193 @@ public class AddNewPetFragment extends Fragment implements View.OnClickListener,
     ArrayAdapter<String> statusAdapter;
     ArrayAdapter<String> typeAdapter;
     ArrayAdapter<String> genderAdapter;
-    ArrayAdapter<String> desexAdaper;
-    ArrayAdapter<String> sizeAdaper;
+    ArrayAdapter<String> desexAdapter;
+    ArrayAdapter<String> sizeAdapter;
 
-    String[] statusData={"Lost","Found","Choose status"};
-    String[] typeData={"Dog","Cat","Pig","Rabbit","Choose pet type"};
-    String[] genderData={"Male","Female","Choose pet gender"};
-    String[] deData={"Yes","No","Is your pet desexed?"};
-    String[] sizeData={"Small","Medium", "Large","What is the pet size?"};
+    String[] statusData={"* Choose status","Lost","Found"};
+    String[] typeData={"* Choose pet type","Dog","Cat","Bird","Pig","Reptile","Rodent","Others"};
+    String[] genderData={"* Choose pet gender","Male","Female"};
+    String[] deData={" Is your pet desexed?","Yes","No",};
+    String[] sizeData={"* What is the pet size?","Small","Medium", "Large"};
 
-    TextView ChooseDate;
+    Button ChooseDate;
     int day,year,month;
+    Long mDateVaule;
     DatePickerDialog datePickerDialog;
 
     Button uploadPhotoButton;
     String mPhotoPath;
+
+    Button displayMapButton;
+    Button hideMapButton;
+
 
     GoogleMap mGoogleMap;
     MapView mMapView;
 
 
     Button addPet;
-    @Override
-    public void onCreate(@Nullable Bundle savedInstanceState) {
 
-        super.onCreate(savedInstanceState);
-        //datepicker Dialog for choosing date
+
+    //spinner value
+    String mKind="";
+    String mGender="";
+    String mDesexed="";
+    String mSize="";
+    String mStatus="";
+
+
+    //Activity
+    MainActivity activity;
+    @Nullable
+    @Override
+    public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+        mView = inflater.inflate(R.layout.fragment_add_new_pet,container,false);
+        activity=(MainActivity)getActivity();
+
         Calendar c=Calendar.getInstance();
         this.year=c.get(Calendar.YEAR);
         this.month=c.get(Calendar.MONTH);
         this.day=c.get(Calendar.DAY_OF_MONTH);
         datePickerDialog=new DatePickerDialog(getContext(),this,year,month,day);
 
-        statusAdapter=new ArrayAdapter<String>(getContext(),android.R.layout.simple_spinner_item,statusData)
-        {
-            @Override
-            public int getCount() {
-                return super.getCount()-1;
-            }
-        };
+        statusAdapter=new ArrayAdapter<String>(getContext(),android.R.layout.simple_spinner_item,statusData);
         statusAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
 
-        typeAdapter=new ArrayAdapter<String>(getContext(),android.R.layout.simple_spinner_item,typeData)
-        {
-            @Override
-            public int getCount() {
-                return super.getCount()-1;
-            }
-        };
+        typeAdapter=new ArrayAdapter<String>(getContext(),android.R.layout.simple_spinner_item,typeData);
         typeAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
 
-        genderAdapter=new ArrayAdapter<String>(getContext(),android.R.layout.simple_spinner_item,genderData)
-        {
-            @Override
-            public int getCount() {
-                return super.getCount()-1;
-            }
-        };
+        genderAdapter=new ArrayAdapter<String>(getContext(),android.R.layout.simple_spinner_item,genderData);
         genderAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
 
-        desexAdaper=new ArrayAdapter<String>(getContext(),android.R.layout.simple_spinner_item,deData)
-        {
-            @Override
-            public int getCount() {
-                return super.getCount()-1;
-            }
-        };
-        desexAdaper.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        desexAdapter=new ArrayAdapter<String>(getContext(),android.R.layout.simple_spinner_item,deData);
+        desexAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
 
-        sizeAdaper=new ArrayAdapter<String>(getContext(),android.R.layout.simple_spinner_item,sizeData)
-        {
-            @Override
-            public int getCount() {
-                return super.getCount()-1;
-            }
-        };
-        sizeAdaper.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        sizeAdapter=new ArrayAdapter<String>(getContext(),android.R.layout.simple_spinner_item,sizeData);
+        sizeAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
 
-        myRef = FirebaseDatabase.getInstance().getReference();
-
+        mFirestore=FirebaseFirestore.getInstance();
         mStorage = FirebaseStorage.getInstance();
         mStorageReference = mStorage.getReference();
 
-    }
 
-
-    @Nullable
-    @Override
-    public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-         mView = inflater.inflate(R.layout.fragment_add_new_pet,container,false);
 
         spinnerForStatus = mView.findViewById(R.id.spinnerForStatus);
         spinnerForStatus.setAdapter(statusAdapter);
-        spinnerForStatus.setSelection(statusData.length-1);
+        spinnerForStatus.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                if(position==0)
+                {
+                    mStatus="";
+                }
+                else
+                {
+                    mStatus=spinnerForStatus.getItemAtPosition(position).toString();
+                }
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+
+            }
+        });
+        spinnerForStatus.setSelection(0);
 
         spinnerForType = mView.findViewById(R.id.spinnerForType);
         spinnerForType.setAdapter(typeAdapter);
-        spinnerForType.setSelection(typeData.length-1);
+        spinnerForType.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                if(position==0)
+                {
+                    mKind="";
+                }
+                else
+                {
+                    mKind=spinnerForType.getItemAtPosition(position).toString();
+                }
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+
+            }
+        });
+        spinnerForType.setSelection(0);
 
         spinnerForGender = mView.findViewById(R.id.spinnerForGender);
         spinnerForGender.setAdapter(genderAdapter);
-        spinnerForGender.setSelection(genderData.length-1);
+        spinnerForGender.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                if(position==0)
+                {
+                    mGender="";
+                }
+                else
+                {
+                    mGender=spinnerForGender.getItemAtPosition(position).toString();
+                }
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+
+            }
+        });
+        spinnerForGender.setSelection(0);
 
         spinnerForDesex = mView.findViewById(R.id.spinnerForDe);
-        spinnerForDesex.setAdapter(desexAdaper);
-        spinnerForDesex.setSelection(deData.length-1);
+        spinnerForDesex.setAdapter(desexAdapter);
+        spinnerForDesex.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                if(position==0)
+                {
+                    mDesexed="";
+                }
+                else
+                {
+                    mDesexed=spinnerForDesex.getItemAtPosition(position).toString();
+                }
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+
+            }
+        });
+        spinnerForDesex.setSelection(0);
 
         spinnerForSize = mView.findViewById(R.id.spinnerForSize);
-        spinnerForSize.setAdapter(sizeAdaper);
-        spinnerForSize.setSelection(sizeData.length-1);
+        spinnerForSize.setAdapter(sizeAdapter);
+        spinnerForSize.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                if(position==0)
+                {
+                    mSize="";
+                }
+                else
+                {
+                    mSize=spinnerForSize.getItemAtPosition(position).toString();
+                }
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+
+            }
+        });
+        spinnerForSize.setSelection(0);
+
 
         mNameTxt = mView.findViewById(R.id.inputName);
-
         mBreedTxt = mView.findViewById(R.id.inputBreed);
-
         mAgeTxt = mView.findViewById(R.id.inputAge);
-
         mDescriptionTxt = mView.findViewById(R.id.addInfo);
-
         mMicrochipTxt = mView.findViewById(R.id.inputMicrochipNb);
-
         mColorTxt = mView.findViewById(R.id.inputColor);
 
         ChooseDate = mView.findViewById(R.id.ChooseDate);
@@ -239,22 +322,26 @@ public class AddNewPetFragment extends Fragment implements View.OnClickListener,
         addPet = mView.findViewById(R.id.addPetBtn);
         addPet.setOnClickListener(this);
 
-        return mView;
-    }
 
-    @Override
-    public void onViewCreated(View view, Bundle savedInstanceState) {
-        super.onViewCreated(view, savedInstanceState);
+        displayMapButton=mView.findViewById(R.id.mapBtn);
+        displayMapButton.setOnClickListener(this);
+
+        hideMapButton=mView.findViewById(R.id.hideMapBtn);
+        hideMapButton.setOnClickListener(this);
+        hideMapButton.setVisibility(View.INVISIBLE);
 
         mMapView =  mView.findViewById(R.id.map);
+        mMapView.setVisibility(View.INVISIBLE);
         if (mMapView != null)
         {
             mMapView.onCreate(null);
             mMapView.onResume();
             mMapView.getMapAsync(this);
-
         }
+
+        return mView;
     }
+
 
     @Override
     public void onClick(View v) {
@@ -264,32 +351,54 @@ public class AddNewPetFragment extends Fragment implements View.OnClickListener,
                 datePickerDialog.show();
                 break;
             case R.id.uploadPhotoBtn:
-               if(getActivity().checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE)== PackageManager.PERMISSION_GRANTED)
-               {
-                   selectPhoto();
-               }
-               else
-               {
-                   getActivity().requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},0);
-               }
-               break;
+                if(getActivity().checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE)== PackageManager.PERMISSION_GRANTED)
+                {
+                    selectPhoto();
+                }
+                else
+                {
+                    getActivity().requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},0);
+                }
+                break;
             case R.id.addPetBtn:
-                addPet();
+                if(mDateVaule==null||uploadImageData==null||mLatLng==null||mStatus.equals("")||mKind.equals("")||mGender.equals("")||mSize.equals(""))
+                {
+                    Toast.makeText(getContext(),"Please fill in the required information",Toast.LENGTH_SHORT).show();
+                }
+                else {
+                    addPet();
+                }
+
+                InputMethodManager im=(InputMethodManager)activity.getSystemService(Context.INPUT_METHOD_SERVICE);
+                if(im.isActive()) im.hideSoftInputFromWindow(activity.getWindow().getDecorView().getWindowToken(), 0);
+
+                break;
+            case R.id.mapBtn:
+                mMapView.setVisibility(View.VISIBLE);
+                hideMapButton.setVisibility(View.VISIBLE);
+                break;
+            case R.id.hideMapBtn:
+                mMapView.setVisibility(View.INVISIBLE);
+                hideMapButton.setVisibility(View.INVISIBLE);
                 break;
 
         }
     }
     @Override
     public void onDateSet(DatePicker view, int year, int month, int dayOfMonth) {
+        this.day=dayOfMonth;
+        this.month=month;
+        this.year=year;
         ChooseDate.setText(month+"/"+dayOfMonth+"/"+year);
+        mDateVaule=new GregorianCalendar(year, month, day).getTimeInMillis();
     }
 
     public void selectPhoto()
     {
-            Intent intent=new Intent();
-            intent.setType("image/*");
-            intent.setAction(Intent.ACTION_GET_CONTENT);
-            startActivityForResult(Intent.createChooser(intent, "Select photo of the pet"), PICK_IMAGE_REQUEST);
+        Intent intent=new Intent();
+        intent.setType("image/*");
+        intent.setAction(Intent.ACTION_GET_CONTENT);
+        startActivityForResult(Intent.createChooser(intent, "Select photo of the pet"), PICK_IMAGE_REQUEST);
     }
 
     @Override
@@ -300,8 +409,11 @@ public class AddNewPetFragment extends Fragment implements View.OnClickListener,
         {
             filePath = data.getData();
             try {
-                Context applicationContext = MainActivity.getContextOfApplication();
-                Bitmap bitmap = MediaStore.Images.Media.getBitmap(applicationContext.getContentResolver(), filePath);
+                // Context applicationContext = MainActivity.getContextOfApplication();
+                Bitmap bitmap = MediaStore.Images.Media.getBitmap(getContext().getContentResolver(), filePath);
+                ByteArrayOutputStream out=new ByteArrayOutputStream();
+                bitmap.compress(Bitmap.CompressFormat.JPEG,30,out);
+                uploadImageData=out.toByteArray();
                 imageView.setImageBitmap(bitmap);
             }
             catch (IOException e)
@@ -311,51 +423,52 @@ public class AddNewPetFragment extends Fragment implements View.OnClickListener,
         }
     }
 
+
+
     public void addPet()
     {
         uploadImage();
 
+        //String mId = myRef.push().getKey();
 
-        String mId = myRef.push().getKey();
-        String mUid = user.getUid();
+        String mPetId=  UUID.randomUUID().toString();
+        String mUid =FirebaseAuth.getInstance().getCurrentUser().getUid();
         String mName = mNameTxt.getText().toString();
         String mBreed = mBreedTxt.getText().toString();
-        String mKind = spinnerForType.getSelectedItem().toString();
-        double mAge = Double.parseDouble(mAgeTxt.getText().toString());
-        String mGender = spinnerForGender.getSelectedItem().toString();
-        String mDesexed = spinnerForDesex.getSelectedItem().toString();
+
+        double mAge=0;
+        if(mAgeTxt.getText().length()!=0)
+        {mAge = Double.parseDouble(mAgeTxt.getText().toString());}
+
         String mMicrochip = mMicrochipTxt.getText().toString();
-        Calendar mDate = new GregorianCalendar(year, month, day);
+        Long mDate =mDateVaule;
         double mLat = mLatLng.latitude;
         double mLng = mLatLng.longitude;
-        String mStatus = spinnerForStatus.getSelectedItem().toString();
-        String mSize = spinnerForSize.getSelectedItem().toString();
         String mColor = mColorTxt.getText().toString();
         String mRegion = getLocationName(mLatLng);
         String mDescription = mDescriptionTxt.getText().toString();
         String mPhotoUrl = mPhotoPath;
 
-        Pet pet = new Pet(
-                mId,
-                mUid,
-                mName,
-                mBreed,
-                mKind,
-                mAge,
-                mGender,
-                mDesexed,
-                mMicrochip,
-                mDate,
-                mLat,
-                mLng,
-                mStatus,
-                mSize,
-                mColor,
-                mRegion,
-                mDescription,
-                mPhotoUrl);
-
-        myRef.child("Pet").child(mId).setValue(pet);
+        Map<String,Object> petMap=new HashMap<String,Object>();
+        petMap.put("Uid",mUid);
+        petMap.put("PetId",mPetId);
+        petMap.put("Name",mName);
+        petMap.put("Breed",mBreed);
+        petMap.put("Kind",mKind);
+        petMap.put("Age",mAge);
+        petMap.put("Gender",mGender);
+        petMap.put("Desexed",mDesexed);
+        petMap.put("MicrochipNumber",mMicrochip);
+        petMap.put("MissingSince",mDate);
+        petMap.put("Latitude",mLat);
+        petMap.put("Longitude",mLng);
+        petMap.put("Status",mStatus);
+        petMap.put("Size",mSize);
+        petMap.put("Color",mColor);
+        petMap.put("Region",mRegion);
+        petMap.put("Description",mDescription);
+        petMap.put("Photo",mPhotoUrl);
+        mFirestore.collection("Pet").document(mPetId).set(petMap);
     }
 
     @Override
@@ -368,11 +481,8 @@ public class AddNewPetFragment extends Fragment implements View.OnClickListener,
             if (ContextCompat.checkSelfPermission(getActivity(),
                     Manifest.permission.ACCESS_FINE_LOCATION)
                     == PackageManager.PERMISSION_GRANTED) {
-                //Getting location accessed
+
                 mGoogleMap.setMyLocationEnabled(true);
-            } else {
-                //Trying to get access
-                checkLocationPermission();
             }
         }
         else {
@@ -386,65 +496,13 @@ public class AddNewPetFragment extends Fragment implements View.OnClickListener,
 
                 mGoogleMap.clear();
                 mGoogleMap.addMarker(new MarkerOptions().position(point));
-
                 mLatLng = point;
+
             }
         });
 
     }
 
-    public static final int MY_PERMISSIONS_REQUEST_LOCATION = 99;
-    private void checkLocationPermission() {
-        if (ContextCompat.checkSelfPermission(getActivity(), Manifest.permission.ACCESS_FINE_LOCATION)
-                != PackageManager.PERMISSION_GRANTED) {
-            if (ActivityCompat.shouldShowRequestPermissionRationale(getActivity(),
-                    Manifest.permission.ACCESS_FINE_LOCATION)) {
-                new AlertDialog.Builder(getActivity())
-                        .setTitle("Location Permission Needed")
-                        .setMessage("The app only will work if you allow to locate yourself")
-                        .setPositiveButton("OK", new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialogInterface, int i) {
-                                requestPermissions( new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
-                                        MY_PERMISSIONS_REQUEST_LOCATION );
-                            }
-                        })
-                        .create()
-                        .show();
-
-
-            } else {
-                requestPermissions(
-                        new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
-                        MY_PERMISSIONS_REQUEST_LOCATION );
-            }
-        }
-    }
-
-    @Override
-    public void onRequestPermissionsResult(int requestCode,
-                                           String permissions[], int[] grantResults) {
-        switch (requestCode) {
-            case MY_PERMISSIONS_REQUEST_LOCATION: {
-                if (grantResults.length > 0
-                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-
-                    if (ContextCompat.checkSelfPermission(getActivity(),
-                            Manifest.permission.ACCESS_FINE_LOCATION)
-                            == PackageManager.PERMISSION_GRANTED) {
-
-                        mGoogleMap.setMyLocationEnabled(true);
-                    }
-
-                } else {
-
-                    Toast.makeText(getActivity(), "permission denied", Toast.LENGTH_LONG).show();
-                }
-                return;
-            }
-
-        }
-    }
 
     public String getLocationName (LatLng latLng)
     {
@@ -452,19 +510,19 @@ public class AddNewPetFragment extends Fragment implements View.OnClickListener,
         List<Address> addresses = null;
         try {
             addresses = geocoder.getFromLocation(latLng.latitude, latLng.longitude, 1);
-            String cityName = addresses.get(0).getAddressLine(0);
-            return cityName;
+            String city = addresses.get(0).getLocality();
+            return  city;
 
         } catch (IOException e) {
             e.printStackTrace();
-            return null;
+            return "";
         }
 
     }
 
     private void uploadImage() {
 
-        if(filePath != null)
+        if(uploadImageData != null)
         {
             final ProgressDialog progressDialog = new ProgressDialog(getActivity());
             progressDialog.setTitle("Uploading data...");
@@ -472,13 +530,18 @@ public class AddNewPetFragment extends Fragment implements View.OnClickListener,
 
             mPhotoPath = "images/"+ UUID.randomUUID().toString();
             StorageReference ref = mStorageReference.child(mPhotoPath);
-            ref.putFile(filePath)
+
+            ref.putBytes(uploadImageData)
                     .addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
                         @Override
                         public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
                             progressDialog.dismiss();
                             Toast.makeText(getActivity(), "Pet was successfully added", Toast.LENGTH_LONG).show();
-                            getActivity().getFragmentManager().popBackStack();
+                            activity.hideAllfragments();
+                            activity.getFragmentManager().beginTransaction().show(activity.petsListFragment).commit();
+                            activity.petsListFragment.getDefault();
+                            activity.getSupportActionBar().setTitle("Pets around you");
+                            resetPage();
                         }
                     })
                     .addOnFailureListener(new OnFailureListener() {
@@ -497,5 +560,32 @@ public class AddNewPetFragment extends Fragment implements View.OnClickListener,
                         }
                     });
         }
+    }
+
+    public void resetPage()
+    {
+         mNameTxt.setText("");
+         mAgeTxt.setText("");
+        mDescriptionTxt.setText("");
+        mColorTxt.setText("");
+        mMicrochipTxt.setText("");
+        mBreedTxt.setText("");
+        spinnerForDesex.setSelection(0);
+        spinnerForGender.setSelection(0);
+        spinnerForSize.setSelection(0);
+        spinnerForStatus.setSelection(0);
+        spinnerForType.setSelection(0);
+        mKind="";
+        mGender="";
+        mDesexed="";
+        mSize="";
+        mStatus="";
+        mLatLng=null;
+        mGoogleMap.clear();
+        mPhotoPath=null;
+        imageView.setImageResource(R.drawable.paw);
+        uploadImageData=null;
+        ChooseDate.setText("Choose the date");
+        mDateVaule=null;
     }
 }
