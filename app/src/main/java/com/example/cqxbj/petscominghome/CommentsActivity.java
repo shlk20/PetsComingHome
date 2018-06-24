@@ -9,8 +9,10 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.text.style.TtsSpan;
 import android.view.LayoutInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ListView;
@@ -37,20 +39,24 @@ import java.util.Map;
 
 public class CommentsActivity extends AppCompatActivity implements View.OnClickListener,OnCompleteListener<QuerySnapshot>{
 
+    //----------------Firebase
     FirebaseFirestore firestore;
     FirebaseAuth firebaseAuth;
 
+    //----------------UI widgets
     ListView commentsListView;
     TextView addCommentTextView;
     Button addBtn;
     Button cancelBtn;
     FloatingActionButton floatingActionButton;
+    FloatingActionButton refreshActionButton;
     ProgressBar pb;
 
+    //---------------This pet
     Pet pet;
 
+    //------------------Comments
     ArrayAdapter<comment> arrayAdapter;
-
     ArrayList<comment> comments;
 
     @Override
@@ -64,8 +70,12 @@ public class CommentsActivity extends AppCompatActivity implements View.OnClickL
         addBtn=findViewById(R.id.addCommentBtn);
         addBtn.setOnClickListener(this);
         addBtn.setVisibility(View.INVISIBLE);
+
         floatingActionButton=findViewById(R.id.addCommentFAB);
         floatingActionButton.setOnClickListener(this);
+        refreshActionButton=findViewById(R.id.refreshFAB);
+        refreshActionButton.setOnClickListener(this);
+
         pb=findViewById(R.id.progressBarOnComment);
         pb.setVisibility(View.INVISIBLE);
         cancelBtn=findViewById(R.id.cancelBtnOnComment);
@@ -75,16 +85,27 @@ public class CommentsActivity extends AppCompatActivity implements View.OnClickL
 
         firebaseAuth=FirebaseAuth.getInstance();
         firestore=FirebaseFirestore.getInstance();
-        firestore.collection("Pet")
-                .document(pet.getId())
-                .collection("Comment").orderBy("Date", Query.Direction.DESCENDING).get().addOnCompleteListener(this);
+        refresh();
 
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        if(item.getItemId()==android.R.id.home)
+        {
+            super.onBackPressed();
+        }
+        return true;
     }
 
     @Override
     public void onClick(View v) {
         switch (v.getId())
         {
+            case R.id.refreshFAB:
+                refresh();
+                break;
             case R.id.addCommentFAB:
                 if(firebaseAuth.getCurrentUser()!=null)
                 {
@@ -92,11 +113,11 @@ public class CommentsActivity extends AppCompatActivity implements View.OnClickL
                     addCommentTextView.setVisibility(View.VISIBLE);
                     addBtn.setVisibility(View.VISIBLE);
                     cancelBtn.setVisibility(View.VISIBLE);
+                    refreshActionButton.setVisibility(View.INVISIBLE);
                 }
                 else{
                     Toast.makeText(getApplicationContext(),"Please login first",Toast.LENGTH_SHORT).show();
                 }
-
                 break;
             case R.id.addCommentBtn:
                 if(!addCommentTextView.getText().toString().equals("")) {
@@ -106,18 +127,67 @@ public class CommentsActivity extends AppCompatActivity implements View.OnClickL
                 {
                     Toast.makeText(getApplicationContext(),"Please fill in the comment",Toast.LENGTH_SHORT).show();
                 }
+                hideInput();
                 break;
             case R.id.cancelBtnOnComment:
+                hideInput();
                 commentsListView.setVisibility(View.VISIBLE);
                 addCommentTextView.setVisibility(View.INVISIBLE);
                 addBtn.setVisibility(View.INVISIBLE);
                 cancelBtn.setVisibility(View.INVISIBLE);
+                refreshActionButton.setVisibility(View.VISIBLE);
                 break;
         }
     }
 
+    //--------------------------Add a new comment
+    private void addComment()
+    {
+        pb.setVisibility(View.VISIBLE);
+        commentsListView.setVisibility(View.VISIBLE);
+        addCommentTextView.setVisibility(View.INVISIBLE);
+        addBtn.setVisibility(View.INVISIBLE);
+        cancelBtn.setVisibility(View.INVISIBLE);
+        refreshActionButton.setVisibility(View.VISIBLE);
+
+        Map<String,Object> newComment =new HashMap<String,Object>();
+        newComment.put("UserEmail",firebaseAuth.getCurrentUser().getEmail());
+        newComment.put("UserDisplayName",firebaseAuth.getCurrentUser().getDisplayName());
+        newComment.put("Text",addCommentTextView.getText().toString());
+        newComment.put("Date",System.currentTimeMillis());
+
+        firestore.collection("Pet").document(pet.getId()).collection("Comment")
+                .add(newComment).addOnCompleteListener(new OnCompleteListener<DocumentReference>() {
+            @Override
+            public void onComplete(@NonNull Task<DocumentReference> task) {
+                if(task.isSuccessful())
+                {
+                    refresh();
+                }
+                else
+                {
+                    pb.setVisibility(View.INVISIBLE);
+                    Toast.makeText(getApplicationContext(),task.getException().getMessage(),Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
+    }
+
+    //--------------------refresh comments
+    private void refresh()
+    {
+        pb.setVisibility(View.VISIBLE);
+        firestore.collection("Pet")
+                .document(pet.getId())
+                .collection("Comment")
+                .orderBy("Date", Query.Direction.DESCENDING)
+                .get()
+                .addOnCompleteListener(this);
+    }
+
     @Override
     public void onComplete(@NonNull Task<QuerySnapshot> task) {
+        pb.setVisibility(View.INVISIBLE);
         if(task.isSuccessful())
         {
 
@@ -139,33 +209,14 @@ public class CommentsActivity extends AppCompatActivity implements View.OnClickL
         }
     }
 
-    private void addComment()
+    //-------------------Hide the input
+    private void hideInput()
     {
-
-        pb.setVisibility(View.VISIBLE);
-        Map<String,Object> newComment =new HashMap<String,Object>();
-        newComment.put("UserEmail",firebaseAuth.getCurrentUser().getEmail());
-        newComment.put("UserDisplayName",firebaseAuth.getCurrentUser().getDisplayName());
-        newComment.put("Text",addCommentTextView.getText().toString());
-        newComment.put("Date",System.currentTimeMillis());
-
-        firestore.collection("Pet").document(pet.getId()).collection("Comment")
-                .add(newComment).addOnCompleteListener(new OnCompleteListener<DocumentReference>() {
-            @Override
-            public void onComplete(@NonNull Task<DocumentReference> task) {
-                if(task.isSuccessful())
-                {
-                    recreate();
-                }
-                else
-                {
-                    pb.setVisibility(View.INVISIBLE);
-                    Toast.makeText(getApplicationContext(),task.getException().getMessage(),Toast.LENGTH_SHORT).show();
-                }
-            }
-        });
+        InputMethodManager im=(InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
+        if(im.isActive()) im.hideSoftInputFromWindow(getWindow().getDecorView().getWindowToken(), 0);
     }
 
+    //----------------------commentAdapter class
     class commentAdapter extends ArrayAdapter<comment>
     {
 
@@ -204,7 +255,7 @@ public class CommentsActivity extends AppCompatActivity implements View.OnClickL
 
         }
     }
-
+    //--------------------comment class
     class comment
     {
         comment(String DisplayName,String Text,Long Date)

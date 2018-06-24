@@ -7,6 +7,7 @@ import android.graphics.BitmapFactory;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
@@ -24,9 +25,10 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 
 public class EachPetActivity extends AppCompatActivity implements View.OnClickListener{
-
+    //----------------Firebase
     FirebaseStorage firebaseStorage;
 
+    //---------------------UI widgets
     TextView nameText;
     TextView kindText;
     TextView breedText;
@@ -41,7 +43,10 @@ public class EachPetActivity extends AppCompatActivity implements View.OnClickLi
     TextView descriptionText;
     ImageView imagePet;
     Button commentBtn;
+
+    //--------------This pet
     Pet thisPet;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -56,9 +61,20 @@ public class EachPetActivity extends AppCompatActivity implements View.OnClickLi
 
         commentBtn=(Button)findViewById(R.id.addCommentBtn);
         commentBtn.setOnClickListener(this);
+
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
     }
 
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        if(item.getItemId()==android.R.id.home)
+        {
+            super.onBackPressed();
+        }
+        return true;
+    }
 
+    //-------------------set text fot this pet
     private void setText(Pet pet)
     {
 
@@ -95,6 +111,7 @@ public class EachPetActivity extends AppCompatActivity implements View.OnClickLi
 
     }
 
+    //-----------------Loading the image of this pet
     private void loadImage(Pet pet)
     {
         imagePet=findViewById(R.id.imagePet);

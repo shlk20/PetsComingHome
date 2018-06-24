@@ -12,21 +12,24 @@
         />
 
     <TextView
-        android:id="@+id/userEmInNavHeader"
+        android:id="@+id/userNameInNavHeader"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_below="@id/userImage"
         android:layout_marginTop="10dp"
         android:paddingLeft="10dp"
-        android:text="Email"
-        android:textColor="@android:color/white" />
-    <TextView
-        android:id="@+id/userNameInNavHeader"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_below="@id/userEmInNavHeader"
-        android:layout_marginTop="10dp"
-        android:paddingLeft="10dp"
         android:text="Username"
         android:textColor="@android:color/white" />
+
+    <TextView
+        android:id="@+id/userEmInNavHeader"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/userNameInNavHeader"
+        android:layout_marginTop="5dp"
+        android:layout_marginBottom="5dp"
+        android:paddingLeft="10dp"
+        android:text="Email"
+        android:textColor="@android:color/white" />
+
 </RelativeLayout>

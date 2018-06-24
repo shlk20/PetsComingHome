@@ -55,24 +55,28 @@ import java.util.Map;
 
 public class ShowOnMapFragment extends Fragment implements OnMapReadyCallback {
 
+    //----------Firebase
     FirebaseStorage firebaseStorage;
     FirebaseFirestore firebaseFirestore;
 
+    //----------Refresh button and progress bar
     FloatingActionButton refreshBtn;
     ProgressBar pb;
 
+    //----------Map
     GoogleMap map;
-
     MapView mapView;
-    ArrayList<Pet> pets;
     ArrayList<Marker> markers;
 
-    View view;
+    //----------Pets
+    ArrayList<Pet> pets;
+
+    //----------Activity
     MainActivity activity;
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, Bundle savedInstanceState) {
-        view=inflater.inflate(R.layout.fragment_show_on_map,container,false);
+        View view=inflater.inflate(R.layout.fragment_show_on_map,container,false);
         firebaseFirestore=FirebaseFirestore.getInstance();
         firebaseStorage=FirebaseStorage.getInstance();
         mapView=view.findViewById(R.id.showOnMap);
@@ -92,11 +96,6 @@ public class ShowOnMapFragment extends Fragment implements OnMapReadyCallback {
     }
 
 
-
-    @Override
-    public void onDestroyView() {
-        super.onDestroyView();
-    }
 
     @Override
     public void onMapReady(GoogleMap googleMap) {
@@ -122,6 +121,7 @@ public class ShowOnMapFragment extends Fragment implements OnMapReadyCallback {
 
     }
 
+    //----------------------Get pets
     private void getPets()
     {
         markers=new ArrayList<Marker>();
@@ -171,7 +171,7 @@ public class ShowOnMapFragment extends Fragment implements OnMapReadyCallback {
             }
         });
     }
-
+    //------------------------------Display these pets
     private void displayPets()
     {
         map.clear();
@@ -211,7 +211,7 @@ public class ShowOnMapFragment extends Fragment implements OnMapReadyCallback {
         }
 
 
-        //map.setInfoWindowAdapter();
+        //-----------------------------------The info window on this map
         map.setInfoWindowAdapter(new GoogleMap.InfoWindowAdapter() {
             TextView name;
             TextView kind;
@@ -249,6 +249,7 @@ public class ShowOnMapFragment extends Fragment implements OnMapReadyCallback {
             }
         });
 
+        //-----------------------Go to get the details activity (EachPetActivity) of this pet
         map.setOnInfoWindowClickListener(new GoogleMap.OnInfoWindowClickListener() {
             @Override
             public void onInfoWindowClick(Marker marker) {
@@ -264,6 +265,7 @@ public class ShowOnMapFragment extends Fragment implements OnMapReadyCallback {
             @Override
             public boolean onMarkerClick(final Marker marker) {
                 final Pet pet=pets.get(markers.indexOf(marker));
+                //------------------Go to get the image of this pet If the image has not been loaded
                 if(pet.bitmap==null) {
                         firebaseStorage.getReference().child(pet.getPhotoUrl()).getBytes(Long.MAX_VALUE)
                                 .addOnSuccessListener(new OnSuccessListener<byte[]>() {
@@ -282,8 +284,6 @@ public class ShowOnMapFragment extends Fragment implements OnMapReadyCallback {
                         });
                 }
                 marker.showInfoWindow();
-
-
                 return true;
             }
         });

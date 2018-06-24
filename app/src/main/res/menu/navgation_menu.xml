@@ -41,18 +41,18 @@
         <item
             android:icon="@drawable/signin"
             android:id="@+id/SignInItem"
-            android:title="Sign In">
+            android:title="Sign in">
         </item>
 
         <item
             android:icon="@drawable/signup"
             android:id="@+id/SignUpItem"
-            android:title="Sign Up">
+            android:title="Sign up">
         </item>
         <item
             android:icon="@drawable/signout"
             android:id="@+id/SignOutItem"
-            android:title="Sign Out">
+            android:title="Sign out">
         </item>
     </group>
 

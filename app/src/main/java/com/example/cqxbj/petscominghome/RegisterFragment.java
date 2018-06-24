@@ -1,7 +1,6 @@
 package com.example.cqxbj.petscominghome;
 
 import android.app.Fragment;
-import android.app.FragmentManager;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -23,10 +22,14 @@ import com.google.firebase.firestore.FirebaseFirestore;
 
 public class RegisterFragment extends Fragment implements View.OnClickListener{
 
+    //---------Firebase
     FirebaseFirestore firebaseDb;
     FirebaseAuth firebaseAuth;
 
+    //---------Activity
     MainActivity activity;
+
+    //---------UI widgets
     Button signUp;
     TextView signInTextView;
     TextView signUpTextView;
@@ -35,15 +38,23 @@ public class RegisterFragment extends Fragment implements View.OnClickListener{
     EditText registerEmail;
     EditText registerPassword;
     EditText registerPasswordConfirm;
-    FragmentManager fragmentManager;
+
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, Bundle savedInstanceState) {
-        View view=inflater.inflate(R.layout.register,container,false);
+        View view=inflater.inflate(R.layout.fragment_register,container,false);
+        activity=(MainActivity)getActivity();
+
+        view.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                activity.hideTheInput();
+            }
+        });
         firebaseAuth=FirebaseAuth.getInstance();
         firebaseDb=FirebaseFirestore.getInstance();
 
-        activity=(MainActivity)getActivity();
+
         progressBar=view.findViewById(R.id.progressBarRegister);
         signUpTextView=view.findViewById(R.id.signUpTextView);
         signInTextView=view.findViewById(R.id.signIn);
@@ -70,6 +81,7 @@ public class RegisterFragment extends Fragment implements View.OnClickListener{
         });
         return view;
     }
+    //------------------Register
     public void register()
     {
         if(isInformationFilled())
@@ -85,8 +97,6 @@ public class RegisterFragment extends Fragment implements View.OnClickListener{
                             public void onComplete(@NonNull Task<AuthResult> task) {
 
                                 if(task.isSuccessful()) {
-                                    resetPage();
-                                    if(activity.loginFragment.isAdded()) {activity.loginFragment.resetPage();}
                                     task.getResult().getUser()
                                             .updateProfile(new UserProfileChangeRequest.Builder().setDisplayName(registerUsername.getText().toString()).build());
                                     Toast.makeText(getContext(),"Registered successfully",Toast.LENGTH_LONG).show();
@@ -123,7 +133,8 @@ public class RegisterFragment extends Fragment implements View.OnClickListener{
 
     public void goToSignInPage()
     {
-        activity.hideAllfragments();
+        activity.hideTheInput();
+        activity.hideTheFragment(activity.registerFragment);
         activity.getSupportActionBar().setTitle("Sign in");
         activity.showTheFragment(activity.loginFragment);
     }
@@ -184,11 +195,22 @@ public class RegisterFragment extends Fragment implements View.OnClickListener{
         registerPassword.setVisibility(View.VISIBLE);
         registerPasswordConfirm.setVisibility(View.VISIBLE);
     }
+
     public void resetPage()
     {
         registerEmail.setText("");
         registerPassword.setText("");
         registerPasswordConfirm.setText("");
         registerUsername.setText("");
+    }
+
+    //--------------Reset when the fragment is hidden
+    @Override
+    public void onHiddenChanged(boolean hidden) {
+        super.onHiddenChanged(hidden);
+        if(hidden)
+        {
+            resetPage();
+        }
     }
 }

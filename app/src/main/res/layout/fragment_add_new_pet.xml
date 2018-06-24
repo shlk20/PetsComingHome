@@ -160,8 +160,9 @@
                 android:layout_width="match_parent"
                 android:layout_height="40dp"
                 android:layout_marginBottom="5dp"
-                android:text="* Choose the date"
+                android:text="* Choose a date"
                 android:textColor="@android:color/black"
+                android:textSize="12sp"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/inputMicrochipNb" />
@@ -174,7 +175,7 @@
                 android:drawableLeft="@drawable/ic_place_black_24dp"
                 android:text="* Tap on map to choose last seen location"
                 android:textAlignment="center"
-                android:textSize="14sp"
+                android:textSize="12sp"
                 app:layout_constraintStart_toEndOf="@+id/uploadPhotoBtn"
                 app:layout_constraintTop_toBottomOf="@+id/ChooseDate" />
 
@@ -184,6 +185,7 @@
                 android:layout_height="40dp"
                 android:drawableLeft="@drawable/ic_photo_black_24dp"
                 android:text="* Upload a photo"
+                android:textSize="12sp"
                 app:layout_constraintStart_toEndOf="@+id/photoTextView"
                 app:layout_constraintTop_toBottomOf="@+id/ChooseDate" />
 
@@ -230,8 +232,10 @@
         android:id="@+id/map"
         android:layout_width="match_parent"
         android:layout_height="0dp"
+        android:layout_marginBottom="66dp"
+        android:layout_marginTop="66dp"
         android:layout_weight="1"
-        android:visibility="invisible"
+        android:visibility="visible"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.0"
@@ -243,9 +247,12 @@
         android:id="@+id/hideMapBtn"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="8dp"
+        android:layout_marginBottom="70dp"
         android:layout_marginEnd="8dp"
+        android:background="@color/colorPrimary"
         android:text="Hide"
+        android:textColor="@android:color/white"
+        android:textStyle="bold"
         android:visibility="visible"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />

@@ -28,6 +28,7 @@ import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
 import android.text.format.DateUtils;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
@@ -83,27 +84,16 @@ import static android.app.Activity.RESULT_OK;
  * Created by cqxbj on 22/05/18.
  */
 
-public class AddNewPetFragment
-        extends Fragment
-        implements  View.OnClickListener,
-                    DatePickerDialog.OnDateSetListener,
-                    OnMapReadyCallback{
+public class AddNewPetFragment extends Fragment implements  View.OnClickListener, DatePickerDialog.OnDateSetListener, OnMapReadyCallback{
 
-
-    private FirebaseFirestore mFirestore;
-
+    //---------Firebase
+    FirebaseFirestore mFirestore;
     FirebaseStorage mStorage;
     StorageReference mStorageReference;
 
-
-    private final int PICK_IMAGE_REQUEST = 10;
-    private Uri filePath;
-    private byte[] uploadImageData;
-    private ImageView imageView;
-
+    //-----------Some UI widget
+    ImageView imageView;
     View mView;
-
-
     TextView mNameTxt;
     TextView mAgeTxt;
     TextView mDescriptionTxt;
@@ -111,44 +101,27 @@ public class AddNewPetFragment
     TextView mMicrochipTxt;
     TextView mBreedTxt;
 
-    LatLng mLatLng;
 
+    //Spinners
     Spinner spinnerForStatus;
     Spinner spinnerForType;
     Spinner spinnerForGender;
     Spinner spinnerForDesex;
     Spinner spinnerForSize;
 
+    //ArrayAdapter
     ArrayAdapter<String> statusAdapter;
     ArrayAdapter<String> typeAdapter;
     ArrayAdapter<String> genderAdapter;
     ArrayAdapter<String> desexAdapter;
     ArrayAdapter<String> sizeAdapter;
 
+    //Some strings for the adapters
     String[] statusData={"* Choose status","Lost","Found"};
     String[] typeData={"* Choose pet type","Dog","Cat","Bird","Pig","Reptile","Rodent","Others"};
     String[] genderData={"* Choose pet gender","Male","Female"};
     String[] deData={" Is your pet desexed?","Yes","No",};
     String[] sizeData={"* What is the pet size?","Small","Medium", "Large"};
-
-    Button ChooseDate;
-    int day,year,month;
-    Long mDateVaule;
-    DatePickerDialog datePickerDialog;
-
-    Button uploadPhotoButton;
-    String mPhotoPath;
-
-    Button displayMapButton;
-    Button hideMapButton;
-
-
-    GoogleMap mGoogleMap;
-    MapView mMapView;
-
-
-    Button addPet;
-
 
     //spinner value
     String mKind="";
@@ -158,40 +131,62 @@ public class AddNewPetFragment
     String mStatus="";
 
 
+    //The upload date part
+    Button ChooseDate;
+    Long mDateVaule;
+    DatePickerDialog datePickerDialog;
+
+    //The upload photo part
+    Button uploadPhotoButton;
+    String mPhotoPath;
+    final int PICK_IMAGE_REQUEST = 10;
+    byte[] uploadImageData;
+
+
+    //--------Google map
+    GoogleMap mGoogleMap;
+    MapView mMapView;
+    Button displayMapButton;
+    Button hideMapButton;
+    //------------Latlng for the new added pet
+    LatLng mLatLng;
+
+    //--------Add a new pet button
+    Button addPet;
+
     //Activity
     MainActivity activity;
+
+    //-----------------------------------initialization
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         mView = inflater.inflate(R.layout.fragment_add_new_pet,container,false);
         activity=(MainActivity)getActivity();
-
         Calendar c=Calendar.getInstance();
-        this.year=c.get(Calendar.YEAR);
-        this.month=c.get(Calendar.MONTH);
-        this.day=c.get(Calendar.DAY_OF_MONTH);
-        datePickerDialog=new DatePickerDialog(getContext(),this,year,month,day);
+        int year=c.get(Calendar.YEAR);
+        int month=c.get(Calendar.MONTH);
+        int day=c.get(Calendar.DAY_OF_MONTH);
+        datePickerDialog=new DatePickerDialog(activity,this,year,month,day);
 
-        statusAdapter=new ArrayAdapter<String>(getContext(),android.R.layout.simple_spinner_item,statusData);
+        statusAdapter=new ArrayAdapter<String>(activity,android.R.layout.simple_spinner_item,statusData);
         statusAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
 
-        typeAdapter=new ArrayAdapter<String>(getContext(),android.R.layout.simple_spinner_item,typeData);
+        typeAdapter=new ArrayAdapter<String>(activity,android.R.layout.simple_spinner_item,typeData);
         typeAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
 
-        genderAdapter=new ArrayAdapter<String>(getContext(),android.R.layout.simple_spinner_item,genderData);
+        genderAdapter=new ArrayAdapter<String>(activity,android.R.layout.simple_spinner_item,genderData);
         genderAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
 
-        desexAdapter=new ArrayAdapter<String>(getContext(),android.R.layout.simple_spinner_item,deData);
+        desexAdapter=new ArrayAdapter<String>(activity,android.R.layout.simple_spinner_item,deData);
         desexAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
 
-        sizeAdapter=new ArrayAdapter<String>(getContext(),android.R.layout.simple_spinner_item,sizeData);
+        sizeAdapter=new ArrayAdapter<String>(activity,android.R.layout.simple_spinner_item,sizeData);
         sizeAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
 
         mFirestore=FirebaseFirestore.getInstance();
         mStorage = FirebaseStorage.getInstance();
         mStorageReference = mStorage.getReference();
-
-
 
         spinnerForStatus = mView.findViewById(R.id.spinnerForStatus);
         spinnerForStatus.setAdapter(statusAdapter);
@@ -363,15 +358,12 @@ public class AddNewPetFragment
             case R.id.addPetBtn:
                 if(mDateVaule==null||uploadImageData==null||mLatLng==null||mStatus.equals("")||mKind.equals("")||mGender.equals("")||mSize.equals(""))
                 {
-                    Toast.makeText(getContext(),"Please fill in the required information",Toast.LENGTH_SHORT).show();
+                    Toast.makeText(activity,"Please fill in the required information",Toast.LENGTH_SHORT).show();
                 }
                 else {
                     addPet();
                 }
-
-                InputMethodManager im=(InputMethodManager)activity.getSystemService(Context.INPUT_METHOD_SERVICE);
-                if(im.isActive()) im.hideSoftInputFromWindow(activity.getWindow().getDecorView().getWindowToken(), 0);
-
+                activity.hideTheInput();
                 break;
             case R.id.mapBtn:
                 mMapView.setVisibility(View.VISIBLE);
@@ -384,15 +376,15 @@ public class AddNewPetFragment
 
         }
     }
+
+    //------------Select the vaule of date
     @Override
     public void onDateSet(DatePicker view, int year, int month, int dayOfMonth) {
-        this.day=dayOfMonth;
-        this.month=month;
-        this.year=year;
-        ChooseDate.setText(month+"/"+dayOfMonth+"/"+year);
-        mDateVaule=new GregorianCalendar(year, month, day).getTimeInMillis();
+        ChooseDate.setText(dayOfMonth+"/"+month+"/"+year);
+        mDateVaule=new GregorianCalendar(year, month, dayOfMonth).getTimeInMillis();
     }
 
+    //------------Go to select a photo
     public void selectPhoto()
     {
         Intent intent=new Intent();
@@ -407,10 +399,10 @@ public class AddNewPetFragment
         if(requestCode == PICK_IMAGE_REQUEST && resultCode == RESULT_OK
                 && data != null && data.getData() != null )
         {
-            filePath = data.getData();
+            //Get the uploadImageDate and display the image
             try {
-                // Context applicationContext = MainActivity.getContextOfApplication();
-                Bitmap bitmap = MediaStore.Images.Media.getBitmap(getContext().getContentResolver(), filePath);
+                Uri filePath = data.getData();
+                Bitmap bitmap = MediaStore.Images.Media.getBitmap(activity.getContentResolver(), filePath);
                 ByteArrayOutputStream out=new ByteArrayOutputStream();
                 bitmap.compress(Bitmap.CompressFormat.JPEG,30,out);
                 uploadImageData=out.toByteArray();
@@ -423,13 +415,11 @@ public class AddNewPetFragment
         }
     }
 
-
-
+    //--------------------Add a new pet
     public void addPet()
     {
+        //-----------------Upload the image
         uploadImage();
-
-        //String mId = myRef.push().getKey();
 
         String mPetId=  UUID.randomUUID().toString();
         String mUid =FirebaseAuth.getInstance().getCurrentUser().getUid();
@@ -471,9 +461,53 @@ public class AddNewPetFragment
         mFirestore.collection("Pet").document(mPetId).set(petMap);
     }
 
+    //-----------------Upload the image
+    private void uploadImage() {
+
+        if(uploadImageData != null)
+        {
+            final ProgressDialog progressDialog = new ProgressDialog(getActivity());
+            progressDialog.setTitle("Uploading data...");
+            progressDialog.show();
+            progressDialog.setCanceledOnTouchOutside(false);
+            mPhotoPath = "images/"+ UUID.randomUUID().toString();
+            StorageReference ref = mStorageReference.child(mPhotoPath);
+
+            ref.putBytes(uploadImageData)
+                    .addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
+                        @Override
+                        public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
+                            progressDialog.dismiss();
+                            Toast.makeText(activity, "Pet was successfully added", Toast.LENGTH_LONG).show();
+                            activity.hideTheFragment(activity.addNewPetFragment);
+                            activity.showTheFragment(activity.petsListFragment);
+                            activity.petsListFragment.getDefault();
+                            activity.getSupportActionBar().setTitle("Pets around you");
+                            resetPage();
+                        }
+                    })
+                    .addOnFailureListener(new OnFailureListener() {
+                        @Override
+                        public void onFailure(@NonNull Exception e) {
+                            progressDialog.dismiss();
+                            Toast.makeText(activity, "Failed "+e.getMessage(), Toast.LENGTH_SHORT).show();
+                        }
+                    })
+                    .addOnProgressListener(new OnProgressListener<UploadTask.TaskSnapshot>() {
+                        @Override
+                        public void onProgress(UploadTask.TaskSnapshot taskSnapshot) {
+                            double progress = 100.0*(((double)taskSnapshot.getBytesTransferred())/taskSnapshot
+                                    .getTotalByteCount());
+                            progressDialog.setMessage("Uploaded "+(int)progress+"%");
+                        }
+                    });
+        }
+    }
+
+    //------------------Google map initialization
     @Override
     public void onMapReady(GoogleMap googleMap) {
-        MapsInitializer.initialize(getContext());
+        MapsInitializer.initialize(activity);
 
         mGoogleMap = googleMap;
 
@@ -489,6 +523,7 @@ public class AddNewPetFragment
             mGoogleMap.setMyLocationEnabled(true);
         }
 
+        //------------------Assign the mLatlng (the Latlng of this new pet)
         mGoogleMap.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
 
             @Override
@@ -503,10 +538,10 @@ public class AddNewPetFragment
 
     }
 
-
+    //----------------------get the location name
     public String getLocationName (LatLng latLng)
     {
-        Geocoder geocoder = new Geocoder(getActivity(), Locale.getDefault());
+        Geocoder geocoder = new Geocoder(activity, Locale.getDefault());
         List<Address> addresses = null;
         try {
             addresses = geocoder.getFromLocation(latLng.latitude, latLng.longitude, 1);
@@ -517,55 +552,13 @@ public class AddNewPetFragment
             e.printStackTrace();
             return "";
         }
-
     }
 
-    private void uploadImage() {
-
-        if(uploadImageData != null)
-        {
-            final ProgressDialog progressDialog = new ProgressDialog(getActivity());
-            progressDialog.setTitle("Uploading data...");
-            progressDialog.show();
-
-            mPhotoPath = "images/"+ UUID.randomUUID().toString();
-            StorageReference ref = mStorageReference.child(mPhotoPath);
-
-            ref.putBytes(uploadImageData)
-                    .addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
-                        @Override
-                        public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
-                            progressDialog.dismiss();
-                            Toast.makeText(getActivity(), "Pet was successfully added", Toast.LENGTH_LONG).show();
-                            activity.hideAllfragments();
-                            activity.getFragmentManager().beginTransaction().show(activity.petsListFragment).commit();
-                            activity.petsListFragment.getDefault();
-                            activity.getSupportActionBar().setTitle("Pets around you");
-                            resetPage();
-                        }
-                    })
-                    .addOnFailureListener(new OnFailureListener() {
-                        @Override
-                        public void onFailure(@NonNull Exception e) {
-                            progressDialog.dismiss();
-                            Toast.makeText(getActivity(), "Failed "+e.getMessage(), Toast.LENGTH_SHORT).show();
-                        }
-                    })
-                    .addOnProgressListener(new OnProgressListener<UploadTask.TaskSnapshot>() {
-                        @Override
-                        public void onProgress(UploadTask.TaskSnapshot taskSnapshot) {
-                            double progress = (100.0*taskSnapshot.getBytesTransferred()/taskSnapshot
-                                    .getTotalByteCount());
-                            progressDialog.setMessage("Uploaded "+(int)progress+"%");
-                        }
-                    });
-        }
-    }
 
     public void resetPage()
     {
-         mNameTxt.setText("");
-         mAgeTxt.setText("");
+        mNameTxt.setText("");
+        mAgeTxt.setText("");
         mDescriptionTxt.setText("");
         mColorTxt.setText("");
         mMicrochipTxt.setText("");
@@ -585,7 +578,22 @@ public class AddNewPetFragment
         mPhotoPath=null;
         imageView.setImageResource(R.drawable.paw);
         uploadImageData=null;
-        ChooseDate.setText("Choose the date");
+        ChooseDate.setText("* Choose a date");
         mDateVaule=null;
+        if(mMapView.getVisibility()==View.VISIBLE)
+        {
+            mMapView.setVisibility(View.INVISIBLE);
+            hideMapButton.setVisibility(View.INVISIBLE);
+        }
+    }
+
+    //--------------------Reset when the fragment is hidden
+    @Override
+    public void onHiddenChanged(boolean hidden) {
+        super.onHiddenChanged(hidden);
+        if(hidden)
+        {
+            resetPage();
+        }
     }
 }

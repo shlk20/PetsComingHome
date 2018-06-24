@@ -27,44 +27,43 @@ import com.google.android.gms.maps.model.MarkerOptions;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
 
-public class SearchFragment
-        extends Fragment
-        implements View.OnClickListener
-        ,DatePickerDialog.OnDateSetListener{
-
+public class SearchFragment extends Fragment implements View.OnClickListener,DatePickerDialog.OnDateSetListener{
 
     TextView searchName;
     TextView searchChip;
     TextView searchBreed;
-
-
-   // TextView searchLocation;
-   // LatLng searchLocationValue=null;
     TextView searchDate;
     Button searchBtn;
 
+    //Spinner for choosing the kind
     Spinner searchKind;
     String[] kindData={"Type","Dog","Cat","Bird","Pig","Reptile","Rodent","Others"};
     ArrayAdapter<String> kindAdapter;
+    //Searching value of kind
     String searchKindValue="";
 
+    //Spinner for choosing the size
     Spinner searchSize;
     String[] sizeData={"Size","Small","Medium", "Large"};
     ArrayAdapter<String> sizeAdapter;
+    //Searching value of size
     String searchSizeValue="";
 
+    //Spinner for choosing the region
     Spinner searchCity;
     String[] cityData={"Location","Auckland","Hamilton","Taurange"
                         ,"Rotorua","Gisborne","Napier"
                         ,"New Playmounth","Palmerston North","Wellington","Christchurch",
                         "Dunedin","Queenstown","Invercargill"};
     ArrayAdapter<String> cityAdapter;
+    //Searching value of region
     String searchLocationValue="";
 
+    //Date
     DatePickerDialog datePickerDialog;
-    Long dateValue;
+    Long searchDateValue;
 
-
+    //Activity
     MainActivity activity;
     @Nullable
     @Override
@@ -72,7 +71,12 @@ public class SearchFragment
     {
         View view=inflater.inflate(R.layout.fragment_search,container,false);
         activity=(MainActivity) getActivity();
-
+        view.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                activity.hideTheInput();
+            }
+        });
 
         //--------------------TextView
         searchName=view.findViewById(R.id.searchName);
@@ -164,32 +168,28 @@ public class SearchFragment
         int day=c.get(Calendar.DAY_OF_MONTH);
         datePickerDialog=new DatePickerDialog(getContext(),this,year,month,day);
 
+        //-----Go to search these pets
         searchBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                   activity.hideAllfragments();
-                   activity.getFragmentManager().beginTransaction().show(activity.petsListFragment).commit();
-                   if(dateValue==null)
-                   {
-                        dateValue=0L;
-                   }
 
-                   activity.petsListFragment.search(searchName.getText().toString(),
-                               searchBreed.getText().toString(),
-                               searchSizeValue,
-                               searchChip.getText().toString(),
-                               searchKindValue,
-                               searchLocationValue,
-                               dateValue);
+                //------------- search pets
+                if(searchDateValue==null)
+                    {
+                        searchDateValue=0L;
+                    }
+                    activity.petsListFragment.getSearchPets(
+                        searchName.getText().toString(),
+                        searchBreed.getText().toString(),
+                        searchSizeValue,
+                        searchChip.getText().toString(),
+                        searchKindValue,
+                        searchLocationValue,
+                        searchDateValue);
 
-                   searchName.setText("");
-                   searchBreed.setText("");
-                   searchChip.setText("");
-                   searchKind.setSelection(0);
-                   searchSize.setSelection(0);
-                   searchKindValue="";
-                   searchSizeValue="";
-                   dateValue=null;
+                //-----hide the search fragment and show the pets list fragment
+                activity.hideTheFragment(activity.searchFragment);
+                activity.showTheFragment(activity.petsListFragment);
             }
         });
         return view;
@@ -205,10 +205,33 @@ public class SearchFragment
         }
     }
 
-
-
     @Override
     public void onDateSet(DatePicker view, int year, int month, int dayOfMonth) {
-        dateValue=new GregorianCalendar(year,month,dayOfMonth).getTimeInMillis();
+        searchDateValue=new GregorianCalendar(year,month,dayOfMonth).getTimeInMillis();
+        searchDate.setText(dayOfMonth+"/"+month+"/"+year);
     }
+
+    public void resetPage()
+    {
+        searchName.setText("");
+        searchBreed.setText("");
+        searchChip.setText("");
+        searchKind.setSelection(0);
+        searchSize.setSelection(0);
+        searchCity.setSelection(0);
+        searchDate.setText("Choose a date");
+        searchDateValue=null;
+    }
+
+    //-----------------------Reset when the fragment is hidden
+    @Override
+    public void onHiddenChanged(boolean hidden) {
+        super.onHiddenChanged(hidden);
+        if(hidden)
+        {
+            resetPage();
+        }
+    }
+
+
 }

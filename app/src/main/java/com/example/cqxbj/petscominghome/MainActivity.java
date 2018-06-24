@@ -37,17 +37,20 @@ import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity {
 
-    private FirebaseAuth firebaseAuth;
-
     private DrawerLayout mDrawerLayout;
     private NavigationView mNavigationView;
+    
+    //Glide requestManager
     private RequestManager rm;
 
-
-
+    //--------------Firebase auth
+    private FirebaseAuth firebaseAuth;
+    //--------------for Google sign in
     GoogleSignInClient googleSignInClient;
+    // SharedPreferences for the app settings
     SharedPreferences sp;
 
+    //--------------the fragments
     petsListFragment petsListFragment;
     AddNewPetFragment addNewPetFragment;
     AppSettingFragment appSettingFragment;
@@ -55,14 +58,15 @@ public class MainActivity extends AppCompatActivity {
     RegisterFragment registerFragment;
     SearchFragment searchFragment;
     ShowOnMapFragment showOnMapFragment;
-     ArrayList<Fragment> fragments;
+    ArrayList<Fragment> fragments;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
         setContentView(R.layout.activity_main);
+        //--------the  Glide requestManager (For loading the avatar of Google accounts in this project)
         rm=Glide.with(this);
-
-
+        //-------Fragments
         petsListFragment=new petsListFragment();
         showOnMapFragment=new ShowOnMapFragment();
         addNewPetFragment=new AddNewPetFragment();
@@ -70,6 +74,7 @@ public class MainActivity extends AppCompatActivity {
         registerFragment=new RegisterFragment();
         searchFragment=new SearchFragment();
         appSettingFragment=new AppSettingFragment();
+        //-------Add all the fragments into a Arraylist
         fragments=new ArrayList<Fragment>();
         fragments.add(petsListFragment);
         fragments.add(showOnMapFragment);
@@ -79,30 +84,37 @@ public class MainActivity extends AppCompatActivity {
         fragments.add(searchFragment);
         fragments.add(appSettingFragment);
 
+        //-------Google signIn
         GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
                 .requestIdToken(getString(R.string.default_web_client_id))
                 .requestEmail()
                 .build();
         googleSignInClient= GoogleSignIn.getClient(this,gso);
 
+        //-------AppSettings Shared Preferences
         sp=getSharedPreferences("AppSettings",0);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         getSupportActionBar().setHomeAsUpIndicator(R.drawable.ic_menu_black_24dp);
 
+        //-------Get the user
         firebaseAuth=FirebaseAuth.getInstance();
         FirebaseUser user=firebaseAuth.getCurrentUser();
 
-        mDrawerLayout = (DrawerLayout) findViewById(R.id.MainDrawerLayout);
+        //-------DrawerLayout
+        mDrawerLayout = findViewById(R.id.MainDrawerLayout);
+
+        //-------NavigationView
         mNavigationView = findViewById(R.id.MainNavigationView);
         mNavigationView.setNavigationItemSelectedListener(new NavigationView.OnNavigationItemSelectedListener() {
             @Override
             public boolean onNavigationItemSelected(@NonNull MenuItem item) {
+                //close the drawer
                 mDrawerLayout.closeDrawer(GravityCompat.START);
-                petsListFragment.resetMode();
-                petsListFragment.refreshBtn.setVisibility(View.VISIBLE);
+                //Hide fragments
                 hideAllfragments();
                 switch(item.getItemId())
-                {
+
+                {   //Show the fragment
                     case R.id.PetsItem:
                                 showTheFragment(petsListFragment);
                                 petsListFragment.getDefault();
@@ -153,31 +165,53 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        //--------show the petsListFragment first
         showTheFragment(petsListFragment);
+        //--------set title
         getSupportActionBar().setTitle("Pets around you");
+        //set the UI for user
         setUI(user);
     }
 
     @Override
-    public void onBackPressed() {
-        if(getSupportActionBar().getTitle().toString().equals("Pets around you"))
-        {
-            super.onBackPressed();
-        }
-        else {
-            hideAllfragments();
-            getFragmentManager().beginTransaction().show(petsListFragment).commit();
-            petsListFragment.resetMode();
-            petsListFragment.getDefault();
-            getSupportActionBar().setTitle("Pets around you");
-        }
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(new Bundle());
     }
 
+    @Override
+    public void onBackPressed() {
+
+        //If the drawer is opened
+        if(mDrawerLayout.isDrawerOpen(GravityCompat.START))
+        {
+            mDrawerLayout.closeDrawer(GravityCompat.START);
+        }
+        //If the drawer is closed
+        else
+        {
+            //Titile is "Pets around you" run the super.OnBackPressed()
+            if(getSupportActionBar().getTitle().toString().equals("Pets around you"))
+            {
+                super.onBackPressed();
+            }
+            //Go back to the pets around you in the petsListFragment
+            else {
+                hideAllfragments();
+                showTheFragment(petsListFragment);
+                petsListFragment.getDefault();
+                getSupportActionBar().setTitle("Pets around you");
+            }
+        }
+
+    }
+
+    // Open or close the drawer
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         if (item.getItemId() == android.R.id.home)
         {
-            if (mDrawerLayout.isDrawerOpen(GravityCompat.START)) {
+            if (mDrawerLayout.isDrawerOpen(GravityCompat.START))
+            {
                 mDrawerLayout.closeDrawer(GravityCompat.START);
             } else {
                 mDrawerLayout.openDrawer(GravityCompat.START);
@@ -186,11 +220,13 @@ public class MainActivity extends AppCompatActivity {
         return true;
     }
 
+    // Set the UI
     public void setUI(FirebaseUser user)
     {
         ImageView userImage=mNavigationView.getHeaderView(0).findViewById(R.id.userImage);
         TextView  userName=mNavigationView.getHeaderView(0).findViewById(R.id.userNameInNavHeader);
         TextView  userEmail=mNavigationView.getHeaderView(0).findViewById(R.id.userEmInNavHeader);
+        //User login
         if(user!=null)
         {
             if(user.getPhotoUrl()!=null) {
@@ -219,8 +255,9 @@ public class MainActivity extends AppCompatActivity {
             mNavigationView.getMenu().findItem(R.id.SignOutItem).setVisible(true);
 
         }
+        //User logout
         else {
-            userImage.setImageResource(R.drawable.ic_android_green_24dp);
+            userImage.setImageResource(R.drawable.ic_android_24dp);
             userEmail.setText("Email");
             userName.setText("Username");
             mNavigationView.getMenu().findItem(R.id.MyPetsItem).setVisible(false);
@@ -232,13 +269,24 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
+    // Some functions for display and hide the fragments
     public void hideAllfragments()
     {
         for(Fragment f:fragments)
         {
-            if(f.isAdded()) {
+            if(f.isVisible()) {
                 getFragmentManager().beginTransaction().hide(f).commit();
             }
+            getFragmentManager().executePendingTransactions();
+        }
+    }
+
+    public void hideTheFragment(Fragment fragment)
+    {
+        if(fragment.isVisible())
+        {
+            getFragmentManager().beginTransaction().hide(fragment).commit();
+            getFragmentManager().executePendingTransactions();
         }
     }
 
@@ -254,10 +302,10 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    //A function for hiding the input
     public void hideTheInput()
     {
         InputMethodManager im=(InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
         if(im.isActive()) im.hideSoftInputFromWindow(getWindow().getDecorView().getWindowToken(), 0);
-
     }
 }

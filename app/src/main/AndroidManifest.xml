@@ -26,23 +26,28 @@
             android:name=".MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
         <activity
             android:screenOrientation="portrait"
             android:name=".EachPetActivity"
             android:label="Details" />
 
-         <meta-data
-         android:name="com.google.android.geo.API_KEY"
-         android:value="AIzaSyBnPRUlDkp3idDWs0cj55s9ztaB1z0HKII"/>
-
-
         <activity
             android:screenOrientation="portrait"
             android:name=".CommentsActivity" />
+
+        <meta-data
+         android:name="com.google.android.geo.API_KEY"
+         android:value="AIzaSyBnPRUlDkp3idDWs0cj55s9ztaB1z0HKII"/>
+
+        <meta-data
+            android:name="preloaded_fonts"
+            android:resource="@array/preloaded_fonts" />
+
+
 
     </application>
 

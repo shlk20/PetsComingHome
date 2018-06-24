@@ -2,16 +2,13 @@ package com.example.cqxbj.petscominghome;
 
 
 import android.Manifest;
-import android.app.Activity;
 import android.app.Fragment;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.location.Location;
 import android.location.LocationManager;
-import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
@@ -29,7 +26,6 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.gms.location.FusedLocationProviderClient;
-import com.google.android.gms.location.LocationAvailability;
 import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationResult;
@@ -40,46 +36,42 @@ import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.QuerySnapshot;
-import com.google.firebase.firestore.ThrowOnExtraProperties;
 import com.google.firebase.storage.FirebaseStorage;
 
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-
-import static android.app.Activity.RESULT_OK;
 
 /**
  * Created by cqxbj on 22/05/18.
  */
 
 public class petsListFragment extends Fragment implements OnCompleteListener<QuerySnapshot>{
+    //--------------Firebase
     FirebaseAuth firebaseAuth;
     FirebaseStorage firebaseStorage;
     FirebaseFirestore firebaseDB;
+
+    //------------For the list
     ListView petList;
     ArrayList<Pet> pets ;
     PetAdapter petAdapter;
 
+    //----------ProgressBar and refresh button
     ProgressBar progressBar;
     FloatingActionButton refreshBtn;
 
-    FusedLocationProviderClient client;
-    Location mLocation;
-
+    //----------------------the range of the searching area
     Double maxLaInRange;
     Double minLaInRange;
     Double maxLongInRange;
     Double minLongInRange;
 
     //-------------------------------search mode variables
-
     private Boolean searchSwitch=false;
     String searchName=null;
     String searchChip=null;
@@ -89,15 +81,13 @@ public class petsListFragment extends Fragment implements OnCompleteListener<Que
     String searchLocation=null;
     Long searchDate=null;
 
-
     //-------------------------------MyPets mode variables
     private Boolean mypetsSwitch=false;
 
-
-    //-------------------------------Context variables
+    //-------------------------------Activity
     MainActivity activity;
 
-    //-------------------------------Setting variables
+    //-------------------------------App settings variables
     int searchRadius;
     Boolean lostSwitch;
     Boolean foundSwitch;
@@ -105,15 +95,24 @@ public class petsListFragment extends Fragment implements OnCompleteListener<Que
     //-------------------------------location
     LocationRequest locationRequest;
     LocationCallback locationCallback;
+    FusedLocationProviderClient client;
+    Location mLocation;
+
     @Nullable
     @Override
     public View onCreateView(final LayoutInflater inflater, @Nullable final ViewGroup container, Bundle savedInstanceState) {
-        final View view=inflater.inflate(R.layout.pets_list,container,false);
+        final View view=inflater.inflate(R.layout.fragment_pets_list,container,false);
+        //---------Some instances of the firebase
         firebaseAuth=FirebaseAuth.getInstance();
         firebaseDB=FirebaseFirestore.getInstance();
         firebaseStorage=FirebaseStorage.getInstance();
 
-        locationRequest=new LocationRequest().setInterval(1000).setPriority(LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY);
+        //---------The activity
+        activity=(MainActivity) getActivity();
+
+        //---------Location
+        client= LocationServices.getFusedLocationProviderClient(activity);
+        locationRequest=new LocationRequest().setInterval(1000).setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
         locationCallback=new LocationCallback()
         {
             @Override
@@ -123,44 +122,36 @@ public class petsListFragment extends Fragment implements OnCompleteListener<Que
                 getSettings();
                 setRange(new LatLng(mLocation.getLatitude(),mLocation.getLongitude()));
                 client.removeLocationUpdates(this);
-                getData();
+                getPetsAround();
             }
         };
 
-        activity=(MainActivity) getActivity();
+        //--------UI
         petList =view.findViewById(R.id.petList);
         progressBar=view.findViewById(R.id.progressBarOnList);
         refreshBtn=view.findViewById(R.id.refreshBtn);
         refreshBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if(searchSwitch)
-                {
-                    getData();
-                }
-                else
-                    {
                     getDefault();
-                }
             }
         });
 
+        //--------Go to get your current location then get the pets around you(Default)
         getDefault();
         return view;
     }
 
+    //--------Go to get your current location then get the pets around you(Default)
     public void getDefault()
     {
-
         UIforLoading();
         if(locationServiceEnabled())
         {
-            client= LocationServices.getFusedLocationProviderClient(getContext());
             if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                 if(ContextCompat.checkSelfPermission(getActivity(),
                         Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED)
                 {
-
                     client.requestLocationUpdates(this.locationRequest,this.locationCallback,null);
                 }
                 else {
@@ -194,27 +185,6 @@ public class petsListFragment extends Fragment implements OnCompleteListener<Que
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
     }
 
-    public void search(String searchName,String searchBreed,String searchSize,String searchChip,String searchKind,String searchLocation,Long searchDate)
-    {
-        this.searchName=searchName;
-        this.searchBreed=searchBreed;
-        this.searchSize=searchSize;
-        this.searchChip=searchChip;
-        this.searchKind=searchKind;
-        this.searchDate=searchDate;
-        this.searchLocation=searchLocation;
-        this.searchSwitch=true;
-        UIforLoading();
-        getSettings();
-        getData();
-    }
-    public void resetMode()
-    {
-         this.mypetsSwitch=false;
-         this.searchSwitch=false;
-         this.searchDate=null;
-    }
-
     //----set UI for loading
     private void UIforLoading()
     {
@@ -226,7 +196,7 @@ public class petsListFragment extends Fragment implements OnCompleteListener<Que
     //--set UI for complete
     private void UIforComplete()
     {
-        if(mypetsSwitch)
+        if(mypetsSwitch||searchSwitch)
         {
             refreshBtn.setVisibility(View.INVISIBLE);
         }
@@ -238,6 +208,7 @@ public class petsListFragment extends Fragment implements OnCompleteListener<Que
         petList.setVisibility(View.VISIBLE);
     }
 
+    //---------Check the location service of the device is enabled
     private boolean locationServiceEnabled()
     {
         LocationManager lm=(LocationManager) activity.getSystemService(Context.LOCATION_SERVICE);
@@ -249,13 +220,15 @@ public class petsListFragment extends Fragment implements OnCompleteListener<Que
         }
     }
 
+    //---------Get the app settings from the SharedPreferences
     private void getSettings()
     {
-        searchRadius=activity.sp.getInt("Radius",1);
+        searchRadius=activity.sp.getInt("Radius",10);
         lostSwitch=activity.sp.getBoolean("LostBool",true);
         foundSwitch=activity.sp.getBoolean("FoundBool",true);
     }
 
+    //---------The searching area
     private  void setRange(LatLng latLng)
     {
 
@@ -265,51 +238,15 @@ public class petsListFragment extends Fragment implements OnCompleteListener<Que
         minLongInRange=latLng.longitude-searchRadius/(111*Math.cos(latLng.latitude*(Math.PI/180)));
     }
 
-    private void getData()
+    //---------Go to get the pets around you (Need to get your location then set the searching area first)
+    private void getPetsAround()
     {
-
-        Query petsQuery=firebaseDB.collection("Pet");
-        if(searchSwitch)
-        {
-                if(!searchName.equals(""))
-                {
-                    petsQuery=petsQuery.whereEqualTo("Name", searchName);
-                }
-                if(!searchChip.equals(""))
-                {
-                    petsQuery=petsQuery.whereEqualTo("MicrochipNumber",searchChip);
-                }
-                if(!searchKind.equals(""))
-                {
-                    petsQuery=petsQuery.whereEqualTo("Kind",searchKind);
-                }
-                if (!searchBreed.equals(""))
-                {
-                    petsQuery=petsQuery.whereEqualTo("Breed",searchBreed);
-                }
-                if(!searchSize.equals(""))
-                {
-                    petsQuery=petsQuery.whereEqualTo("Size",searchSize);
-                }
-                if(!searchLocation.equals(""))
-                {
-                    petsQuery=petsQuery.whereEqualTo("Region",searchLocation);
-                }
-                if(searchDate!=0L)
-                {
-                    petsQuery=petsQuery.whereEqualTo("MissingSince",searchDate);
-                }
-                petsQuery.get().addOnCompleteListener(this);
-        }
-        else
-        {
-                firebaseDB.collection("Pet").whereGreaterThan("Latitude",minLaInRange)
+        firebaseDB.collection("Pet").whereGreaterThan("Latitude",minLaInRange)
                         .whereLessThan("Latitude",maxLaInRange)
                         .get().addOnCompleteListener(this);
-        }
-
     }
 
+    //---------Go to get your pets
     public void getMyPets()
     {
         UIforLoading();
@@ -322,7 +259,54 @@ public class petsListFragment extends Fragment implements OnCompleteListener<Que
 
         }
     }
+    //-------Go to search pets
+    public void getSearchPets(String searchName,String searchBreed,String searchSize,String searchChip,String searchKind,String searchLocation,Long searchDate)
+    {
+        this.searchName=searchName;
+        this.searchBreed=searchBreed;
+        this.searchSize=searchSize;
+        this.searchChip=searchChip;
+        this.searchKind=searchKind;
+        this.searchDate=searchDate;
+        this.searchLocation=searchLocation;
+        this.searchSwitch=true;
+        UIforLoading();
+        getSettings();
+        Query petsQuery=firebaseDB.collection("Pet");
 
+        if(!searchName.equals(""))
+        {
+            petsQuery=petsQuery.whereEqualTo("Name", searchName);
+        }
+        if(!searchChip.equals(""))
+        {
+            petsQuery=petsQuery.whereEqualTo("MicrochipNumber",searchChip);
+        }
+        if(!searchKind.equals(""))
+        {
+            petsQuery=petsQuery.whereEqualTo("Kind",searchKind);
+        }
+        if (!searchBreed.equals(""))
+        {
+            petsQuery=petsQuery.whereEqualTo("Breed",searchBreed);
+        }
+        if(!searchSize.equals(""))
+        {
+            petsQuery=petsQuery.whereEqualTo("Size",searchSize);
+        }
+        if(!searchLocation.equals(""))
+        {
+            petsQuery=petsQuery.whereEqualTo("Region",searchLocation);
+        }
+        if(searchDate!=0L)
+        {
+            petsQuery=petsQuery.whereEqualTo("MissingSince",searchDate);
+        }
+        petsQuery.get().addOnCompleteListener(this);
+
+    }
+
+    //------------when get the results
     @Override
     public void onComplete(@NonNull Task<QuerySnapshot> task) {
         pets=new ArrayList<>();
@@ -354,67 +338,17 @@ public class petsListFragment extends Fragment implements OnCompleteListener<Que
                         eachPet.get("Description").toString(),
                         eachPet.get("Photo").toString()
                 );
-
-                if(searchSwitch)
+                //----------searching mode or mypets mode
+                if(searchSwitch||mypetsSwitch)
                 {
-                        if (lostSwitch && foundSwitch)
-                        {
-                            addEachPet(p);
-                        }
-                        else if (lostSwitch && (!foundSwitch))
-                        {
-                            if (p.getStatus().equals("Lost")) {
-                                addEachPet(p);
-                            }
-                        }
-                        else if (foundSwitch && (!lostSwitch))
-                        {
-                            if (p.getStatus().equals("Found")) {
-                                addEachPet(p);
-                            }
-                        }
+                    checkSettingThenAdd(p);
                 }
-                else if(mypetsSwitch)
-                {
-                    if (lostSwitch && foundSwitch)
-                    {
-                        addEachPet(p);
-                    }
-                    else if (lostSwitch && (!foundSwitch))
-                    {
-                        if (p.getStatus().equals("Lost")) {
-                            addEachPet(p);
-                        }
-                    }
-                    else if (foundSwitch && (!lostSwitch))
-                    {
-                        if (p.getStatus().equals("Found")) {
-                            addEachPet(p);
-                        }
-                    }
-                }
+                //----------adding the pets around you
                 else
                 {
                     if(p.getLng()<=maxLongInRange&&p.getLng()>=minLongInRange)
                     {
-
-                        if(lostSwitch&&foundSwitch) {
-                            addEachPet(p);
-                        }
-                        else if(lostSwitch&&(!foundSwitch))
-                        {
-                            if(p.getStatus().equals("Lost"))
-                            {
-                                addEachPet(p);
-                            }
-                        }
-                        else if (foundSwitch&&(!lostSwitch))
-                        {
-                            if(p.getStatus().equals("Found"))
-                            {
-                                addEachPet(p);
-                            }
-                        }
+                        checkSettingThenAdd(p);
                     }
                 }
             }
@@ -425,8 +359,29 @@ public class petsListFragment extends Fragment implements OnCompleteListener<Que
             Toast.makeText(getContext(),task.getException().getMessage(),Toast.LENGTH_SHORT).show();
         }
     }
-
-    public void addEachPet(final Pet p)
+    //------------Check if the lostSwitch and the foundSwtich for adding the pets
+    private void checkSettingThenAdd(Pet p)
+    {
+        if(lostSwitch&&foundSwitch) {
+            addEachPet(p);
+        }
+        else if(lostSwitch&&(!foundSwitch))
+        {
+            if(p.getStatus().equals("Lost"))
+            {
+                addEachPet(p);
+            }
+        }
+        else if (foundSwitch&&(!lostSwitch))
+        {
+            if(p.getStatus().equals("Found"))
+            {
+                addEachPet(p);
+            }
+        }
+    }
+    //------------Add the pet into the arraylist
+    private void addEachPet(final Pet p)
     {
         pets.add(p);
         firebaseStorage.getReference()
@@ -443,6 +398,22 @@ public class petsListFragment extends Fragment implements OnCompleteListener<Que
                 Toast.makeText(getContext(), e.getMessage(), Toast.LENGTH_LONG).show();
             }
         });
+    }
+
+    //-----------------When the fragment is hidden
+    @Override
+    public void onHiddenChanged(boolean hidden) {
+        // super.onHiddenChanged(hidden);
+        if(hidden) {
+            reset();
+        }
+    }
+
+    //----------------Reset some variables for the different modes
+    public void reset()
+    {
+        this.mypetsSwitch=false;
+        this.searchSwitch=false;
     }
 
     //PetAdapter class
@@ -508,7 +479,6 @@ public class petsListFragment extends Fragment implements OnCompleteListener<Que
                     }
                 }
             });
-
             return view;
         }
 

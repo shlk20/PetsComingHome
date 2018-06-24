@@ -15,13 +15,18 @@ import android.widget.TextView;
 
 public class AppSettingFragment extends Fragment implements View.OnClickListener {
 
-    TextView searchRadius;
-    Switch lostSwitch;
-    Switch foundSwitch;
+    //---------Setting values
     int radius;
     Boolean lostBool;
     Boolean foundBool;
+
+    //-----------UI widgets
+    TextView searchRadius;
+    Switch lostSwitch;
+    Switch foundSwitch;
     Button saveBtn;
+
+    //-----------Activity
     MainActivity activity;
 
     @Nullable
@@ -30,7 +35,13 @@ public class AppSettingFragment extends Fragment implements View.OnClickListener
         View view=inflater.inflate(R.layout.fragment_app_setting,container,false);
 
         activity=(MainActivity) getActivity();
-        radius=activity.sp.getInt("Radius",1);
+        view.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                activity.hideTheInput();
+            }
+        });
+        radius=activity.sp.getInt("Radius",10);
         lostBool=activity.sp.getBoolean("LostBool",true);
         foundBool=activity.sp.getBoolean("FoundBool",true);
 
@@ -45,6 +56,7 @@ public class AppSettingFragment extends Fragment implements View.OnClickListener
         return view;
     }
 
+    //------------set them with the setting values
     private void setUI()
     {
         lostSwitch.setChecked(lostBool);
@@ -53,6 +65,7 @@ public class AppSettingFragment extends Fragment implements View.OnClickListener
 
     }
 
+    //-------------save changes
     private void saveChanges()
     {
         SharedPreferences.Editor editor=activity.sp.edit();
@@ -64,12 +77,36 @@ public class AppSettingFragment extends Fragment implements View.OnClickListener
 
     @Override
     public void onClick(View v) {
+        // Hide the input
         InputMethodManager im=(InputMethodManager)activity.getSystemService(Context.INPUT_METHOD_SERVICE);
         if(im.isActive()) im.hideSoftInputFromWindow(activity.getWindow().getDecorView().getWindowToken(), 0);
+
+        //save Changes
         saveChanges();
+
+        //Go to the pets around you(petsListFragment)
         activity.hideAllfragments();
-        activity.getFragmentManager().beginTransaction().show(activity.petsListFragment).commit();
+        activity.showTheFragment(activity.petsListFragment);
         activity.petsListFragment.getDefault();
         activity.getSupportActionBar().setTitle("Pets around you");
+    }
+
+    public void reset()
+    {
+        radius=activity.sp.getInt("Radius",10);
+        lostBool=activity.sp.getBoolean("LostBool",true);
+        foundBool=activity.sp.getBoolean("FoundBool",true);
+        lostSwitch.setChecked(lostBool);
+        foundSwitch.setChecked(foundBool);
+        searchRadius.setText(String.valueOf(radius));
+    }
+
+    @Override
+    public void onHiddenChanged(boolean hidden) {
+        super.onHiddenChanged(hidden);
+        if(hidden)
+        {
+            reset();
+        }
     }
 }
