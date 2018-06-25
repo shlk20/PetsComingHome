@@ -231,11 +231,21 @@ public class ShowOnMapFragment extends Fragment implements OnMapReadyCallback {
                 color=view.findViewById(R.id.colorInfoWindow);
                 status=view.findViewById(R.id.statusInfoWindow);
                 view.setBackgroundColor(Color.WHITE);
-                name.setText(petOnThisMark.getName());
-                kind.setText(petOnThisMark.getKind());
-                breed.setText(petOnThisMark.getBreed());
-                color.setText(petOnThisMark.getColor());
-                status.setText(petOnThisMark.getStatus());
+
+                if(petOnThisMark.getName().equals("")) name.setText("N/A");
+                else name.setText(petOnThisMark.getName());
+
+                if(petOnThisMark.getKind().equals("")) kind.setText("N/A");
+                else kind.setText(petOnThisMark.getKind());
+
+                if(petOnThisMark.getBreed().equals("")) breed.setText("N/A");
+                else breed.setText(petOnThisMark.getBreed());
+
+                if(petOnThisMark.getColor().equals("")) color.setText("N/A");
+                else color.setText(petOnThisMark.getColor());
+
+                if(petOnThisMark.getStatus().equals("")) status.setText("N/A");
+                else status.setText(petOnThisMark.getStatus());
 
                 imageView=view.findViewById(R.id.imageInfoWindow);
                 imageView.setImageBitmap(petOnThisMark.bitmap);

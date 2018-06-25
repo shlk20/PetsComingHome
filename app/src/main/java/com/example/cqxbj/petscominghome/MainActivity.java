@@ -233,7 +233,7 @@ public class MainActivity extends AppCompatActivity {
                 rm.load(user.getPhotoUrl()).into(userImage);
             }
             else {
-                userImage.setImageResource(R.drawable.ic_android_green_24dp);
+                userImage.setImageResource(R.drawable.ic_android_24dp);
             }
 
             if(user.getDisplayName()!=null) {

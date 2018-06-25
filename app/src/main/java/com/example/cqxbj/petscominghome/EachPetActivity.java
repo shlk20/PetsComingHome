@@ -91,17 +91,38 @@ public class EachPetActivity extends AppCompatActivity implements View.OnClickLi
         desexedText=findViewById(R.id.detailDesexedText);
         descriptionText=findViewById(R.id.detailDescriptionText);
 
-        nameText.setText(pet.getName());
-        kindText.setText(pet.getKind());
-        breedText.setText(pet.getBreed());
-        ageText.setText(pet.getAge().toString());
-        genderText.setText(pet.getGender());
-        sizeText.setText(pet.getSize());
-        statusText.setText(pet.getStatus());
-        colorText.setText(pet.getColor());
-        locationText.setText(pet.getRegion());
-        desexedText.setText(pet.getDesexed());
-        descriptionText.setText(pet.getDescription());
+        if(pet.getName().equals("")) nameText.setText("N/A");
+        else nameText.setText(pet.getName());
+
+        if(pet.getKind().equals("")) kindText.setText("N/A");
+        else kindText.setText(pet.getKind());
+
+        if(pet.getBreed().equals("")) breedText.setText("N/A");
+        else breedText.setText(pet.getBreed());
+
+        if(pet.getAge()==0) ageText.setText("N/A");
+        else ageText.setText(pet.getAge().toString());
+
+        if(pet.getGender().equals("")) genderText.setText("N/A");
+        else genderText.setText(pet.getGender());
+
+        if(pet.getSize().equals("")) sizeText.setText("N/A");
+        else sizeText.setText(pet.getSize());
+
+        if(pet.getStatus().equals("")) statusText.setText("N/A");
+        else statusText.setText(pet.getStatus());
+
+        if(pet.getColor().equals("")) colorText.setText("N/A");
+        else colorText.setText(pet.getColor());
+
+        if(pet.getRegion().equals("")) locationText.setText("N/A");
+        else locationText.setText(pet.getRegion());
+
+        if(pet.getDesexed().equals("")) desexedText.setText("N/A");
+        else desexedText.setText(pet.getDesexed());
+
+        if(pet.getDescription().equals("")) descriptionText.setText("N/A");
+        else descriptionText.setText(pet.getDescription());
         
 
         Date thisDate=new Date(pet.getDate());

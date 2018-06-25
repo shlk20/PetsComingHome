@@ -2,8 +2,11 @@ package com.example.cqxbj.petscominghome;
 
 
 import android.Manifest;
+import android.app.AlertDialog;
+import android.app.DatePickerDialog;
 import android.app.Fragment;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.BitmapFactory;
@@ -19,6 +22,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.ProgressBar;
@@ -443,21 +447,51 @@ public class petsListFragment extends Fragment implements OnCompleteListener<Que
             view.setClickable(false);
 
             TextView name = (TextView) view.findViewById(R.id.NameTxt);
-            name.setText(pet.getName());
+            if(pet.getName().equals(""))
+            {
+                name.setText("N/A");
+            }
+            else name.setText(pet.getName());
+
 
             TextView kind= (TextView) view.findViewById(R.id.KindTxt);
+            if(pet.getKind().equals(""))
+            {
+                kind.setText("N/A");
+            }
+            else
             kind.setText(pet.getKind());
 
             TextView breed=(TextView) view.findViewById(R.id.BreedTxt);
+            if(pet.getBreed().equals(""))
+            {
+                breed.setText("N/A");
+            }
+            else
             breed.setText(pet.getBreed());
 
             TextView color=(TextView) view.findViewById(R.id.ColorTxt);
+            if(pet.getColor().equals(""))
+            {
+                color.setText("N/A");
+            }
+            else
             color.setText(pet.getColor());
 
             TextView location=(TextView)view.findViewById(R.id.RegionTxt);
+            if(pet.getRegion().equals(""))
+            {
+                location.setText("N/A");
+            }
+            else
             location.setText(pet.getRegion());
 
             TextView status=(TextView)view.findViewById(R.id.StatusTxt);
+            if(pet.getStatus().equals(""))
+            {
+                status.setText("N/A");
+            }
+            else
             status.setText(pet.getStatus());
 
             ImageView image = (ImageView) view.findViewById(R.id.imagePet);
@@ -479,6 +513,60 @@ public class petsListFragment extends Fragment implements OnCompleteListener<Que
                     }
                 }
             });
+
+            Button deleteBtn=view.findViewById(R.id.deleteBtn);
+            if(mypetsSwitch)
+            {
+                deleteBtn.setVisibility(View.VISIBLE);
+                deleteBtn.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+
+                        final AlertDialog.Builder builder=new AlertDialog.Builder(activity);
+
+                        builder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                UIforLoading();
+                                firebaseDB.collection("Pet").document(pet.getId()).collection("Comment").document().delete();
+                                firebaseDB.collection("Pet").document(pet.getId()).delete().addOnCompleteListener(new OnCompleteListener<Void>() {
+                                    @Override
+                                    public void onComplete(@NonNull Task<Void> task) {
+
+                                        if(task.isSuccessful()) {
+                                            Toast.makeText(activity,"Deleted successfully",Toast.LENGTH_SHORT).show();
+                                            activity.petsListFragment.getMyPets();
+                                            UIforComplete();
+                                        }
+                                        else
+                                        {
+                                            Toast.makeText(activity,task.getException().getMessage(),Toast.LENGTH_SHORT).show();
+                                        }
+
+                                    }
+                                });
+                            }
+                        });
+                        builder.setNegativeButton("No", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                            }
+                        });
+
+
+
+                        AlertDialog ad=builder.create();
+                        ad.setTitle("Are you sure to delete this pet? ");
+                        ad.show();
+
+
+
+                    }
+                });
+            }else
+            {
+                deleteBtn.setVisibility(View.INVISIBLE);
+            }
             return view;
         }
 
