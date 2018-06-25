@@ -21,6 +21,7 @@
         android:supportsRtl="true"
         android:largeHeap="true"
         android:theme="@style/AppTheme">
+        
         <activity
             android:screenOrientation="portrait"
             android:name=".MainActivity">
