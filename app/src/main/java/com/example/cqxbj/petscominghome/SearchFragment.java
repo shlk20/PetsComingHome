@@ -53,7 +53,7 @@ public class SearchFragment extends Fragment implements View.OnClickListener,Dat
     Spinner searchCity;
     String[] cityData={"Location","Auckland","Hamilton","Taurange"
                         ,"Rotorua","Gisborne","Napier"
-                        ,"New Playmounth","Palmerston North","Wellington","Christchurch",
+                        ,"New Plymounth","Palmerston North","Wellington","Christchurch",
                         "Dunedin","Queenstown","Invercargill"};
     ArrayAdapter<String> cityAdapter;
     //Searching value of region
