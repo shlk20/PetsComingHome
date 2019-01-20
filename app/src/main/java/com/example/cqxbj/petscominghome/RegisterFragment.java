@@ -198,10 +198,8 @@ public class RegisterFragment extends Fragment implements View.OnClickListener{
 
     public void resetPage()
     {
-        registerEmail.setText("");
-        registerPassword.setText("");
-        registerPasswordConfirm.setText("");
-        registerUsername.setText("");
+        registerPassword.setText(null);
+        registerPasswordConfirm.setText(null);
     }
 
     //--------------Reset when the fragment is hidden

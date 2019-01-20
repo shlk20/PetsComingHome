@@ -2,26 +2,20 @@ package com.example.cqxbj.petscominghome;
 
 
 import android.app.Fragment;
-import android.app.FragmentManager;
 import android.app.FragmentTransaction;
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.graphics.Color;
-import android.icu.text.UnicodeSetSpanner;
 import android.support.annotation.NonNull;
 import android.support.design.widget.NavigationView;
-import android.support.v4.app.FragmentActivity;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.MenuItem;
-import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.ImageView;
 import android.widget.TextView;
-import android.widget.Toast;
+
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.RequestManager;
@@ -31,8 +25,6 @@ import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 
-import java.io.InputStream;
-import java.net.URL;
 import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity {
@@ -75,7 +67,7 @@ public class MainActivity extends AppCompatActivity {
         searchFragment=new SearchFragment();
         appSettingFragment=new AppSettingFragment();
         //-------Add all the fragments into a Arraylist
-        fragments=new ArrayList<Fragment>();
+        fragments=new ArrayList<>();
         fragments.add(petsListFragment);
         fragments.add(showOnMapFragment);
         fragments.add(addNewPetFragment);
@@ -272,13 +264,16 @@ public class MainActivity extends AppCompatActivity {
     // Some functions for display and hide the fragments
     public void hideAllfragments()
     {
+        FragmentTransaction ft=getFragmentManager().beginTransaction();
         for(Fragment f:fragments)
         {
             if(f.isVisible()) {
-                getFragmentManager().beginTransaction().hide(f).commit();
+               ft=ft.hide(f);
             }
-            getFragmentManager().executePendingTransactions();
+
         }
+        ft.commit();
+        getFragmentManager().executePendingTransactions();
     }
 
     public void hideTheFragment(Fragment fragment)
@@ -292,13 +287,15 @@ public class MainActivity extends AppCompatActivity {
 
     public void showTheFragment(Fragment fragment)
     {
+        FragmentTransaction ft=getFragmentManager().beginTransaction();
+
         if(!fragment.isAdded())
         {
-            getFragmentManager().beginTransaction().add(R.id.MainContainer,fragment).commit();
+            ft.add(R.id.MainContainer,fragment).commit();
         }
         else
         {
-            getFragmentManager().beginTransaction().show(fragment).commit();
+            ft.show(fragment).commit();
         }
     }
 

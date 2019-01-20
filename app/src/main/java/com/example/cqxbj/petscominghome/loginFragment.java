@@ -135,7 +135,7 @@ public class loginFragment extends Fragment implements View.OnClickListener{
                 GoogleSignInAccount account = task.getResult(ApiException.class);
                 firebaseSignInWithGoogle(account);
             } catch (ApiException e) {
-                Toast.makeText(activity,"Error",Toast.LENGTH_LONG).show();
+                Toast.makeText(activity,task.getException().getMessage(),Toast.LENGTH_LONG).show();
             }
         }
     }
@@ -220,8 +220,7 @@ public class loginFragment extends Fragment implements View.OnClickListener{
 
     public void resetPage()
     {
-        signInEmail.setText("");
-        signInPassword.setText("");
+        signInPassword.setText(null);
     }
 
     //----------------Reset when the fragment is hidden

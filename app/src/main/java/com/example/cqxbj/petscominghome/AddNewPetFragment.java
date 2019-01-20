@@ -1,37 +1,24 @@
 package com.example.cqxbj.petscominghome;
 
 import android.Manifest;
-import android.app.Activity;
 import android.app.DatePickerDialog;
 import android.app.Fragment;
 import android.app.ProgressDialog;
-import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.graphics.Color;
 import android.location.Address;
 import android.location.Geocoder;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Looper;
 import android.provider.MediaStore;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
-
-import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
-import android.support.v7.app.AlertDialog;
-import android.text.format.DateUtils;
 import android.view.LayoutInflater;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
@@ -40,24 +27,15 @@ import android.widget.ImageView;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
-
-import com.google.android.gms.location.FusedLocationProviderClient;
-import com.google.android.gms.location.LocationRequest;
-import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapView;
 import com.google.android.gms.maps.MapsInitializer;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.OnProgressListener;
@@ -68,7 +46,6 @@ import com.google.firebase.storage.UploadTask;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.Calendar;
-import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.List;
@@ -76,7 +53,6 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
 
-import javax.xml.transform.Result;
 
 import static android.app.Activity.RESULT_OK;
 
@@ -85,6 +61,8 @@ import static android.app.Activity.RESULT_OK;
  */
 
 public class AddNewPetFragment extends Fragment implements  View.OnClickListener, DatePickerDialog.OnDateSetListener, OnMapReadyCallback{
+
+
 
     //---------Firebase
     FirebaseFirestore mFirestore;
@@ -157,31 +135,36 @@ public class AddNewPetFragment extends Fragment implements  View.OnClickListener
     //Activity
     MainActivity activity;
 
+
+    //---------------ProgressDialog
+     ProgressDialog progressDialog;
+
     //-----------------------------------initialization
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         mView = inflater.inflate(R.layout.fragment_add_new_pet,container,false);
         activity=(MainActivity)getActivity();
+        progressDialog = new ProgressDialog(getActivity());
         Calendar c=Calendar.getInstance();
         int year=c.get(Calendar.YEAR);
         int month=c.get(Calendar.MONTH);
         int day=c.get(Calendar.DAY_OF_MONTH);
         datePickerDialog=new DatePickerDialog(activity,this,year,month,day);
 
-        statusAdapter=new ArrayAdapter<String>(activity,android.R.layout.simple_spinner_item,statusData);
+        statusAdapter=new ArrayAdapter<>(activity,android.R.layout.simple_spinner_item,statusData);
         statusAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
 
-        typeAdapter=new ArrayAdapter<String>(activity,android.R.layout.simple_spinner_item,typeData);
+        typeAdapter=new ArrayAdapter<>(activity,android.R.layout.simple_spinner_item,typeData);
         typeAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
 
-        genderAdapter=new ArrayAdapter<String>(activity,android.R.layout.simple_spinner_item,genderData);
+        genderAdapter=new ArrayAdapter<>(activity,android.R.layout.simple_spinner_item,genderData);
         genderAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
 
-        desexAdapter=new ArrayAdapter<String>(activity,android.R.layout.simple_spinner_item,deData);
+        desexAdapter=new ArrayAdapter<>(activity,android.R.layout.simple_spinner_item,deData);
         desexAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
 
-        sizeAdapter=new ArrayAdapter<String>(activity,android.R.layout.simple_spinner_item,sizeData);
+        sizeAdapter=new ArrayAdapter<>(activity,android.R.layout.simple_spinner_item,sizeData);
         sizeAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
 
         mFirestore=FirebaseFirestore.getInstance();
@@ -361,7 +344,7 @@ public class AddNewPetFragment extends Fragment implements  View.OnClickListener
                     Toast.makeText(activity,"Please fill in the required information",Toast.LENGTH_SHORT).show();
                 }
                 else {
-                    addPet();
+                    startAddPet();
                 }
                 activity.hideTheInput();
                 break;
@@ -416,11 +399,14 @@ public class AddNewPetFragment extends Fragment implements  View.OnClickListener
     }
 
     //--------------------Add a new pet
-    public void addPet()
-    {
-        //-----------------Upload the image
-        uploadImage();
 
+    private void startAddPet()
+    {
+        uploadImage();
+    }
+
+    private void addPet()
+    {
         String mPetId=  UUID.randomUUID().toString();
         String mUid =FirebaseAuth.getInstance().getCurrentUser().getUid();
         String mName = mNameTxt.getText().toString();
@@ -439,7 +425,7 @@ public class AddNewPetFragment extends Fragment implements  View.OnClickListener
         String mDescription = mDescriptionTxt.getText().toString();
         String mPhotoUrl = mPhotoPath;
 
-        Map<String,Object> petMap=new HashMap<String,Object>();
+        Map<String,Object> petMap=new HashMap<>();
         petMap.put("Uid",mUid);
         petMap.put("PetId",mPetId);
         petMap.put("Name",mName);
@@ -455,10 +441,24 @@ public class AddNewPetFragment extends Fragment implements  View.OnClickListener
         petMap.put("Status",mStatus);
         petMap.put("Size",mSize);
         petMap.put("Color",mColor);
-        petMap.put("Region",mRegion);
+        petMap.put("Region",mRegion==null?"":mRegion);
         petMap.put("Description",mDescription);
         petMap.put("Photo",mPhotoUrl);
-        mFirestore.collection("Pet").document(mPetId).set(petMap);
+        mFirestore.collection("Pet").document(mPetId).set(petMap).addOnSuccessListener(new OnSuccessListener<Void>() {
+            @Override
+            public void onSuccess(Void aVoid) {
+                progressDialog.dismiss();
+                Toast.makeText(activity, "Pet was successfully added", Toast.LENGTH_LONG).show();
+                activity.getFragmentManager().beginTransaction().remove(activity.addNewPetFragment).commit();
+                activity.fragments.remove(activity.addNewPetFragment);
+                activity.addNewPetFragment=new AddNewPetFragment();
+                activity.fragments.add(activity.addNewPetFragment);
+
+                activity.showTheFragment(activity.petsListFragment);
+                activity.petsListFragment.getDefault();
+                activity.getSupportActionBar().setTitle("Pets around you");
+            }
+        });
     }
 
     //-----------------Upload the image
@@ -466,7 +466,6 @@ public class AddNewPetFragment extends Fragment implements  View.OnClickListener
 
         if(uploadImageData != null)
         {
-            final ProgressDialog progressDialog = new ProgressDialog(getActivity());
             progressDialog.setTitle("Uploading data...");
             progressDialog.show();
             progressDialog.setCanceledOnTouchOutside(false);
@@ -477,13 +476,7 @@ public class AddNewPetFragment extends Fragment implements  View.OnClickListener
                     .addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
                         @Override
                         public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
-                            progressDialog.dismiss();
-                            Toast.makeText(activity, "Pet was successfully added", Toast.LENGTH_LONG).show();
-                            activity.hideTheFragment(activity.addNewPetFragment);
-                            activity.showTheFragment(activity.petsListFragment);
-                            activity.petsListFragment.getDefault();
-                            activity.getSupportActionBar().setTitle("Pets around you");
-                            resetPage();
+                                addPet();
                         }
                     })
                     .addOnFailureListener(new OnFailureListener() {
@@ -542,58 +535,61 @@ public class AddNewPetFragment extends Fragment implements  View.OnClickListener
     public String getLocationName (LatLng latLng)
     {
         Geocoder geocoder = new Geocoder(activity, Locale.getDefault());
+
         List<Address> addresses = null;
+        String city="";
         try {
-            addresses = geocoder.getFromLocation(latLng.latitude, latLng.longitude, 1);
-            String city = addresses.get(0).getLocality();
-            return  city;
+            addresses = geocoder.getFromLocation(latLng.latitude, latLng.longitude, 3);
+            city = addresses.get(0).getLocality();
+            return city;
 
-        } catch (IOException e) {
+        }
+        catch (IOException e) {
             e.printStackTrace();
-            return "";
+            return city;
         }
     }
 
-
-    public void resetPage()
-    {
-        mNameTxt.setText("");
-        mAgeTxt.setText("");
-        mDescriptionTxt.setText("");
-        mColorTxt.setText("");
-        mMicrochipTxt.setText("");
-        mBreedTxt.setText("");
-        spinnerForDesex.setSelection(0);
-        spinnerForGender.setSelection(0);
-        spinnerForSize.setSelection(0);
-        spinnerForStatus.setSelection(0);
-        spinnerForType.setSelection(0);
-        mKind="";
-        mGender="";
-        mDesexed="";
-        mSize="";
-        mStatus="";
-        mLatLng=null;
-        mGoogleMap.clear();
-        mPhotoPath=null;
-        imageView.setImageResource(R.drawable.paw);
-        uploadImageData=null;
-        ChooseDate.setText("* Choose a date");
-        mDateVaule=null;
-        if(mMapView.getVisibility()==View.VISIBLE)
-        {
-            mMapView.setVisibility(View.INVISIBLE);
-            hideMapButton.setVisibility(View.INVISIBLE);
-        }
-    }
-
-    //--------------------Reset when the fragment is hidden
-    @Override
-    public void onHiddenChanged(boolean hidden) {
-        super.onHiddenChanged(hidden);
-        if(hidden)
-        {
-            resetPage();
-        }
-    }
+//--------------------------------------------------------
+//    public void resetPage()
+//    {
+//        mNameTxt.setText("");
+//        mAgeTxt.setText("");
+//        mDescriptionTxt.setText("");
+//        mColorTxt.setText("");
+//        mMicrochipTxt.setText("");
+//        mBreedTxt.setText("");
+//        spinnerForDesex.setSelection(0);
+//        spinnerForGender.setSelection(0);
+//        spinnerForSize.setSelection(0);
+//        spinnerForStatus.setSelection(0);
+//        spinnerForType.setSelection(0);
+//        mKind="";
+//        mGender="";
+//        mDesexed="";
+//        mSize="";
+//        mStatus="";
+//        mLatLng=null;
+//        mGoogleMap.clear();
+//        mPhotoPath=null;
+//        imageView.setImageResource(R.drawable.paw);
+//        uploadImageData=null;
+//        ChooseDate.setText("* Choose a date");
+//        mDateVaule=null;
+//        if(mMapView.getVisibility()==View.VISIBLE)
+//        {
+//            mMapView.setVisibility(View.INVISIBLE);
+//            hideMapButton.setVisibility(View.INVISIBLE);
+//        }
+//    }
+//
+//    //--------------------Reset when the fragment is hidden
+//    @Override
+//    public void onHiddenChanged(boolean hidden) {
+//        super.onHiddenChanged(hidden);
+//        if(hidden)
+//        {
+//            resetPage();
+//        }
+//    }
 }

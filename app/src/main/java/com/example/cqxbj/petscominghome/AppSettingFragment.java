@@ -41,9 +41,7 @@ public class AppSettingFragment extends Fragment implements View.OnClickListener
                 activity.hideTheInput();
             }
         });
-        radius=activity.sp.getInt("Radius",10);
-        lostBool=activity.sp.getBoolean("LostBool",true);
-        foundBool=activity.sp.getBoolean("FoundBool",true);
+
 
         searchRadius=view.findViewById(R.id.searchRadius);
         lostSwitch=view.findViewById(R.id.lostSwitch);
@@ -52,17 +50,8 @@ public class AppSettingFragment extends Fragment implements View.OnClickListener
         saveBtn=view.findViewById(R.id.saveSettingsBtn);
         saveBtn.setOnClickListener(this);
 
-        setUI();
+        defaultUI();
         return view;
-    }
-
-    //------------set them with the setting values
-    private void setUI()
-    {
-        lostSwitch.setChecked(lostBool);
-        foundSwitch.setChecked(foundBool);
-        searchRadius.setText(String.valueOf(radius));
-
     }
 
     //-------------save changes
@@ -91,7 +80,7 @@ public class AppSettingFragment extends Fragment implements View.OnClickListener
         activity.getSupportActionBar().setTitle("Pets around you");
     }
 
-    public void reset()
+    public void defaultUI()
     {
         radius=activity.sp.getInt("Radius",10);
         lostBool=activity.sp.getBoolean("LostBool",true);
@@ -106,7 +95,7 @@ public class AppSettingFragment extends Fragment implements View.OnClickListener
         super.onHiddenChanged(hidden);
         if(hidden)
         {
-            reset();
+            defaultUI();
         }
     }
 }

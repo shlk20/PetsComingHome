@@ -2,7 +2,6 @@ package com.example.cqxbj.petscominghome;
 
 import android.app.DatePickerDialog;
 import android.app.Fragment;
-import android.graphics.Color;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.view.LayoutInflater;
@@ -15,14 +14,6 @@ import android.widget.DatePicker;
 import android.widget.Spinner;
 import android.widget.TextView;
 
-import com.google.android.gms.maps.CameraUpdateFactory;
-import com.google.android.gms.maps.GoogleMap;
-import com.google.android.gms.maps.MapView;
-import com.google.android.gms.maps.OnMapReadyCallback;
-import com.google.android.gms.maps.model.Circle;
-import com.google.android.gms.maps.model.CircleOptions;
-import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.MarkerOptions;
 
 import java.util.Calendar;
 import java.util.GregorianCalendar;
@@ -188,7 +179,14 @@ public class SearchFragment extends Fragment implements View.OnClickListener,Dat
                         searchDateValue);
 
                 //-----hide the search fragment and show the pets list fragment
-                activity.hideTheFragment(activity.searchFragment);
+                activity.getFragmentManager().beginTransaction().remove(activity.searchFragment).commit();
+                activity.fragments.remove(activity.searchFragment);
+
+                activity.searchFragment=new SearchFragment();
+                activity.fragments.add(activity.searchFragment);
+
+                // activity.hideTheFragment(activity.searchFragment);
+
                 activity.showTheFragment(activity.petsListFragment);
             }
         });
@@ -210,28 +208,28 @@ public class SearchFragment extends Fragment implements View.OnClickListener,Dat
         searchDateValue=new GregorianCalendar(year,month,dayOfMonth).getTimeInMillis();
         searchDate.setText(dayOfMonth+"/"+month+"/"+year);
     }
-
-    public void resetPage()
-    {
-        searchName.setText("");
-        searchBreed.setText("");
-        searchChip.setText("");
-        searchKind.setSelection(0);
-        searchSize.setSelection(0);
-        searchCity.setSelection(0);
-        searchDate.setText("Choose a date");
-        searchDateValue=null;
-    }
-
-    //-----------------------Reset when the fragment is hidden
-    @Override
-    public void onHiddenChanged(boolean hidden) {
-        super.onHiddenChanged(hidden);
-        if(hidden)
-        {
-            resetPage();
-        }
-    }
+//--------------------------------------
+//    public void resetPage()
+//    {
+//        searchName.setText("");
+//        searchBreed.setText("");
+//        searchChip.setText("");
+//        searchKind.setSelection(0);
+//        searchSize.setSelection(0);
+//        searchCity.setSelection(0);
+//        searchDate.setText("Choose a date");
+//        searchDateValue=null;
+//    }
+//
+//    //-----------------------Reset when the fragment is hidden
+//    @Override
+//    public void onHiddenChanged(boolean hidden) {
+//        super.onHiddenChanged(hidden);
+//        if(hidden)
+//        {
+//            resetPage();
+//        }
+//    }
 
 
 }

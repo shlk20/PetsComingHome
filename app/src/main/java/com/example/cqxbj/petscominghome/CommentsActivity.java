@@ -1,13 +1,11 @@
 package com.example.cqxbj.petscominghome;
 
 import android.content.Context;
-import android.icu.util.Calendar;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.text.style.TtsSpan;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
@@ -150,7 +148,7 @@ public class CommentsActivity extends AppCompatActivity implements View.OnClickL
         cancelBtn.setVisibility(View.INVISIBLE);
         refreshActionButton.setVisibility(View.VISIBLE);
 
-        Map<String,Object> newComment =new HashMap<String,Object>();
+        Map<String,Object> newComment =new HashMap<>();
         newComment.put("UserEmail",firebaseAuth.getCurrentUser().getEmail());
         newComment.put("UserDisplayName",firebaseAuth.getCurrentUser().getDisplayName());
         newComment.put("Text",addCommentTextView.getText().toString());
@@ -191,7 +189,7 @@ public class CommentsActivity extends AppCompatActivity implements View.OnClickL
         if(task.isSuccessful())
         {
 
-            comments=new ArrayList<comment>();
+            comments=new ArrayList<>();
             for (QueryDocumentSnapshot eachComments:task.getResult())
             {
                 comments.add(
@@ -221,7 +219,7 @@ public class CommentsActivity extends AppCompatActivity implements View.OnClickL
     {
 
         int re;
-        public commentAdapter(@NonNull Context context, int resource, @NonNull List objects) {
+        commentAdapter(@NonNull Context context, int resource, @NonNull List objects) {
             super(context, resource, objects);
             re=resource;
         }

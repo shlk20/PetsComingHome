@@ -3,7 +3,6 @@ package com.example.cqxbj.petscominghome;
 
 import android.Manifest;
 import android.app.AlertDialog;
-import android.app.DatePickerDialog;
 import android.app.Fragment;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -369,14 +368,14 @@ public class petsListFragment extends Fragment implements OnCompleteListener<Que
         if(lostSwitch&&foundSwitch) {
             addEachPet(p);
         }
-        else if(lostSwitch&&(!foundSwitch))
+        else if(lostSwitch)
         {
             if(p.getStatus().equals("Lost"))
             {
                 addEachPet(p);
             }
         }
-        else if (foundSwitch&&(!lostSwitch))
+        else if (foundSwitch)
         {
             if(p.getStatus().equals("Found"))
             {
@@ -424,7 +423,7 @@ public class petsListFragment extends Fragment implements OnCompleteListener<Que
     class PetAdapter extends ArrayAdapter<Pet> {
         int rescourceid;
         Context context;
-        public PetAdapter(@NonNull Context context, int resource, @NonNull List objects) {
+        PetAdapter(@NonNull Context context, int resource, @NonNull List objects) {
             super(context, resource, objects);
             rescourceid = resource;
             this.context=context;
@@ -446,7 +445,7 @@ public class petsListFragment extends Fragment implements OnCompleteListener<Que
 
             view.setClickable(false);
 
-            TextView name = (TextView) view.findViewById(R.id.NameTxt);
+            TextView name =  view.findViewById(R.id.NameTxt);
             if(pet.getName().equals(""))
             {
                 name.setText("N/A");
@@ -454,7 +453,7 @@ public class petsListFragment extends Fragment implements OnCompleteListener<Que
             else name.setText(pet.getName());
 
 
-            TextView kind= (TextView) view.findViewById(R.id.KindTxt);
+            TextView kind=  view.findViewById(R.id.KindTxt);
             if(pet.getKind().equals(""))
             {
                 kind.setText("N/A");
@@ -462,7 +461,7 @@ public class petsListFragment extends Fragment implements OnCompleteListener<Que
             else
             kind.setText(pet.getKind());
 
-            TextView breed=(TextView) view.findViewById(R.id.BreedTxt);
+            TextView breed= view.findViewById(R.id.BreedTxt);
             if(pet.getBreed().equals(""))
             {
                 breed.setText("N/A");
@@ -470,7 +469,7 @@ public class petsListFragment extends Fragment implements OnCompleteListener<Que
             else
             breed.setText(pet.getBreed());
 
-            TextView color=(TextView) view.findViewById(R.id.ColorTxt);
+            TextView color= view.findViewById(R.id.ColorTxt);
             if(pet.getColor().equals(""))
             {
                 color.setText("N/A");
@@ -478,7 +477,7 @@ public class petsListFragment extends Fragment implements OnCompleteListener<Que
             else
             color.setText(pet.getColor());
 
-            TextView location=(TextView)view.findViewById(R.id.RegionTxt);
+            TextView location=view.findViewById(R.id.RegionTxt);
             if(pet.getRegion().equals(""))
             {
                 location.setText("N/A");
@@ -486,7 +485,7 @@ public class petsListFragment extends Fragment implements OnCompleteListener<Que
             else
             location.setText(pet.getRegion());
 
-            TextView status=(TextView)view.findViewById(R.id.StatusTxt);
+            TextView status=view.findViewById(R.id.StatusTxt);
             if(pet.getStatus().equals(""))
             {
                 status.setText("N/A");
@@ -494,10 +493,10 @@ public class petsListFragment extends Fragment implements OnCompleteListener<Que
             else
             status.setText(pet.getStatus());
 
-            ImageView image = (ImageView) view.findViewById(R.id.imagePet);
+            ImageView image =  view.findViewById(R.id.imagePet);
             image.setImageBitmap(pet.bitmap);
 
-            TextView goToDetails = (TextView) view.findViewById(R.id.Details);
+            TextView goToDetails =  view.findViewById(R.id.Details);
             goToDetails.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {

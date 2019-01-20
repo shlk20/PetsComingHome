@@ -1,11 +1,8 @@
 package com.example.cqxbj.petscominghome;
 
 import android.graphics.Bitmap;
-import android.icu.util.DateInterval;
 
 import java.io.Serializable;
-import java.util.Calendar;
-import java.util.Date;
 
 /**
  * Created by cqxbj on 23/05/18.
@@ -33,9 +30,9 @@ public class Pet implements Serializable,Cloneable {
         private String mPhotoUrl;
 
 
-        public Bitmap bitmap;
+        Bitmap bitmap;
 
-        public Pet(
+        Pet(
                 String PetId,
                 String Uid,
                 String Name,
